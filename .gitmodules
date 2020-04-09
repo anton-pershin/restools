@@ -1,0 +1,3 @@
+[submodule "thequickmath"]
+	path = thequickmath
+	url = https://github.com/anton-pershin/thequickmath
