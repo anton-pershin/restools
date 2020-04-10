@@ -1,3 +1,6 @@
 [submodule "thequickmath"]
 	path = thequickmath
 	url = https://github.com/anton-pershin/thequickmath
+[submodule "pycomsdk"]
+	path = pycomsdk
+	url = https://sa2systems.ru:88/com/pycomsdk.git
