@@ -8,44 +8,34 @@ import os
 sys.path.append(os.getcwd())
 
 import restools.timeintegration as ti
+import restools.timeintegration_builders as ti_builders
 from comsdk.comaux import print_pretty_dict
 from comsdk.research import Research
 
 
-class RelaminarisationTimeBuilder(ti.NoBackupAccessBuilder):
-    def __init__(self):
-        ti.NoBackupAccessBuilder.__init__(self, ti.TimeIntegrationInOldChannelFlow)
-
-    def create_transform(self) -> None:
-        def transform_(d) -> dict:
-            max_ke_eps = 0.2
-            out = {'t_relam': None}
-            for i in range(len(d['T'])):
-                if d['max_KE'][i] < max_ke_eps:
-                    out['t_relam'] = d['T'][i]
-                    break
-            return out
-        self._transform = transform_
-
-
-builder = ti.NoBackupAccessBuilder(ti.TimeIntegrationInOldChannelFlow)
-director = ti.TimeIntegrationBuildDirector(builder)
-director.construct()
-ti_obj = builder.get_timeintegration('/path/to/data')
+builder = ti_builders.get_ti_builder(xy_averaged_quantities=['ke'])
+ti_obj = builder.get_timeintegration('/media/tony/WD_My_Passport_2TB/Leeds/PhD/research/'
+                                     '2018-11-13_Simulations_for_in-phase_oscillations_in_wide_domain/'
+                                     '100-S13_ContinuingTimeIntegration_R_244.3125_246.6875_0.125_A_0.001_omega_0.0625/'
+                                     'data-244.3125')
 f = ti_obj.solution(100)
 print('Shape of u-component at t = 100: {}'.format(f.u.shape))
 sim_conf = ti_obj.simulation_configuration
 print('\nSimulation configuration:')
 print_pretty_dict(sim_conf)
 print('\nSummary data:')
-print(ti_obj.summary_data['T'])
+print(ti_obj.scalar_series['T'])
+print('\nKE data:')
+print(ti_obj.vector_series.ke.shape)
 
-#builder = RelaminarisationTimeBuilder()
-#director = ti.TimeIntegrationBuildDirector(builder)
-#director.construct()
-#res = Research.create_from_config('WIDE_SIMS_IN_PHASE')
-#ti_function = ti.build_timeintegration_sequence(res, [100, 101, 102], builder)
-#for Re in ti_function.domain:
-#    print('Relaminarisation time at Re = {} is {}'.format(Re, ti_function.at(Re).summary_data['t_relam']))
+builder = ti_builders.RelaminarisationTimeBuilder()
+director = ti.TimeIntegrationBuildDirector(builder)
+director.construct([])
+res = Research.open('WIDE_SIMS_IN_PHASE')
+ti_function = ti.build_timeintegration_sequence(res, [100, 101, 102], builder)
+for Re in ti_function.domain:
+    print('Relaminarisation time at Re = {} is {}'.format(Re, ti_function.at(Re).scalar_series['t_relam']))
+
+res = Research.create('SOME_TEST', 'Some test research for fun')
 
 #print_pretty_dict(ti_obj.summary_data)
