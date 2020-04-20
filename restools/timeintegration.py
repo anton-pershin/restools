@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
+from typing import Callable, Optional, SupportsFloat, Mapping
+from typing_extensions import Literal
 
 from thequickmath.aux import index_for_almost_exact_coincidence
 from thequickmath.field import *
@@ -109,7 +110,7 @@ class TimeIntegration(ABC):
                                   'parameter')
 
     @abstractmethod
-    def upload_solution(self, t_i) -> Field:
+    def upload_solution(self, t_i: SupportsFloat) -> Mapping[SupportsFloat, Field]:
         raise NotImplementedError('Must be implemented. It must return the solution as Field instance based on t_i'
                                   ' as an index in a time series')
 
@@ -120,18 +121,8 @@ class TimeIntegration(ABC):
                                   'series from the same file). The dictionary, apparently, must also contain the data '
                                   'identified by data_id ')
 
-#    @abstractmethod
-#    def upload_scalar_series(self) -> dict:
-#        raise NotImplementedError('Must be implemented. It must return the dictionary containing all summary data, i.e.'
-#                                  ' any real-valued time series related to time-integration')
-#
-#    @abstractmethod
-#    def upload_vector_series(self) -> dict:
-#        raise NotImplementedError('Must be implemented. It must return the dictionary containing all summary data, i.e.'
-#                                  ' any real-valued time series related to time-integration')
-
     @abstractmethod
-    def upload_simulation_configuration(self) -> dict:
+    def upload_simulation_configuration(self) -> Mapping[Literal['simulation_configuration'],  dict]:
         raise NotImplementedError('Must be implemented. It must return the dictionary containing simulation '
                                   'configuration')
 
@@ -171,9 +162,9 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
         _, attrs = self._read_field_and_attrs(0)
         return {'simulation_configuration': attrs}
 
-    def upload_solution(self, t_i) -> Field:
+    def upload_solution(self, t_i: SupportsFloat) -> Mapping[SupportsFloat, Field]:
         field, _ = self._read_field_and_attrs(t_i)
-        return field
+        return {t_i: field}
 
     def upload_data(self, data_id) -> dict:
         """
@@ -236,7 +227,7 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
         field_.set_elements_names([data_id])
         return field_
 
-    def _read_field_and_attrs(self, t_i):
+    def _read_field_and_attrs(self, t_i: SupportsFloat):
         field_name = 'u{:.3f}.h5'.format(self.t[t_i])
         field, attrs = read_field(os.path.join(self._data_path, field_name))
         return field, attrs
