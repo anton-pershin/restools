@@ -13,7 +13,7 @@ class RelaminarisationTimeBuilder(NoBackupAccessBuilder):
     def __init__(self):
         NoBackupAccessBuilder.__init__(self, TimeIntegrationInOldChannelFlow)
 
-    def create_transform_scalar_series(self) -> None:
+    def create_transform(self) -> None:
         def transform_(d) -> dict:
             max_ke_eps = 0.2
             out = {'t_relam': None}
@@ -22,11 +22,10 @@ class RelaminarisationTimeBuilder(NoBackupAccessBuilder):
                     out['t_relam'] = d['T'][i]
                     break
             return out
-        self._transform_scalar_series = transform_
+        self._transform = transform_
 
 
 def get_ti_builder(cf_version: Literal['old', 'epfl'] = 'old',
-                   xy_averaged_quantities: Sequence[str] = ('ke', 'u', 'v'),
                    nobackup=True) -> TimeIntegrationBuilder:
     """
     Returns TimeIntegrationBuilder associated with a particular version of channelflow (cf_version), selected
@@ -34,8 +33,6 @@ def get_ti_builder(cf_version: Literal['old', 'epfl'] = 'old',
     data (nobackup)
 
     :param cf_version: version of channelflow (can be either 'old' or 'epfl')
-    :param xy_averaged_quantities: list of xy-averaged quantities which should uploaded into vector_series. Can be any
-    subset of ('ke', 'u', 'v')
     :param nobackup: whether uploaded data should be cached after the use (nobackup=False) or not (nobackup=True)
     :return:
     """
@@ -50,5 +47,5 @@ def get_ti_builder(cf_version: Literal['old', 'epfl'] = 'old',
         raise NotImplemented('The case nobackup={} must be implemented!'.format(nobackup))
 
     director = TimeIntegrationBuildDirector(builder)
-    director.construct(xy_averaged_quantities)
+    director.construct()
     return builder

@@ -31,7 +31,8 @@ class FreeDataAfterAccessStrategy(DataAccessStrategy):
             data = storage[data_id]
             del storage[data_id]
         else:
-            data = upload_func(*upload_func_args)
+            all_data = upload_func(*upload_func_args)  # all possible data is returned
+            data = all_data[data_id]  # retrieve only necessary data and return it
         return data
 
 
@@ -44,8 +45,9 @@ class HoldDataInMemoryAfterAccessStrategy(DataAccessStrategy):
         if data_id in storage:
             data = storage[data_id]
         else:
-            data = upload_func(*upload_func_args)
-            storage[data_id] = data
+            all_data = upload_func(*upload_func_args)  # all possible data is returned
+            storage.update(all_data)  # we add all uploaded data to storage
+            data = all_data[data_id]  # retrieve only necessary data and return it
         return data
 
 
