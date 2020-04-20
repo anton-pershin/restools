@@ -8,13 +8,14 @@ import os
 sys.path.append(os.getcwd())
 
 import restools.timeintegration as ti
-import restools.timeintegration_builders as ti_builders
+from restools.timeintegration_builders import get_ti_builder
+from restools.relaminarisation import upload_relaminarisation_time
 from comsdk.comaux import print_pretty_dict
 from comsdk.research import Research
 
 
 res = Research.open('WIDE_SIMS_IN_PHASE')
-builder = ti_builders.get_ti_builder()
+builder = get_ti_builder()
 ti_obj = builder.get_timeintegration(os.path.join(res.get_task_path(100), 'data-244.3125'))
 f = ti_obj.solution(100)
 print('Print of Field object:')
@@ -28,12 +29,11 @@ print(ti_obj.T)
 print('\nKE data:')
 print(ti_obj.ke_z.shape)
 
-builder = ti_builders.RelaminarisationTimeBuilder()
-director = ti.TimeIntegrationBuildDirector(builder)
-director.construct()
+
+builder = get_ti_builder(cache=True, upload_data_extension=upload_relaminarisation_time)
 ti_function = ti.build_timeintegration_sequence(res, [100, 101, 102], builder)
 for Re in ti_function.domain:
-    print('Relaminarisation time at Re = {} is {}'.format(Re, ti_function.at(Re).scalar_series['t_relam']))
+    print('Relaminarisation time at Re = {} is {}'.format(Re, ti_function.at(Re).t_relam))
 
 res = Research.create('SOME_TEST', 'Some test research for fun')
 
