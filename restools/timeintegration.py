@@ -12,15 +12,18 @@ class TimeIntegration(ABC):
     """
     Class TimeIntegration is a general representation of the data produced by time-integration. The current
     implementation regards a particular case of 3D fluid simulations. This class wraps up the real data (e.g., *.h5,
-    *.nc and *.txt files) and splits into two main data representations: (1) solution (3D) time series, (2) vector
-    time series, (3) scalar time series and (4) simulations configuration. The former is a list of full flow
+    *.nc and *.txt files) and splits into two main data representations: (1) solution (3D) time series, (2) other data
+    (possibly, time series) and (3) simulations configuration. The former is a list of full flow
     fields saved at separate instants of time which can be assessed via method
-    solution(t). Vector time series, scalar time series and simulation configuration can be accessed via properties
-    scalar_series (dict), vector_series (Field) and simulation_configuration (dict). All the data is accessed according to the
-    lazy initialisation pattern (i.e., files are loaded only when they are needed). At the same time, whether the data
-    is cached/stored when it has been loaded depends on DataAccessStrategy defined for solution fields
-    (solution_access_strategy) and other data (other_data_access_strategy). Scalar and vector series can be transformed
-    right after they are loaded through the functions transform_scalar_series and transform_vector_series.
+    solution(t). Other data are attributes of the class instance, differentiated by their so-called Data ID, and
+    depend on a particular derived class (see docs of the corresponding class). Simulations configuration can be
+    accessed via property simulation_configuration. All the data is accessed according to the lazy initialisation
+    pattern (i.e., files are loaded only when they are needed). At the same time, whether the data is cached/stored when
+    it has been loaded depends on DataAccessStrategy defined for solution fields (solution_access_strategy) and other
+    data (other_data_access_strategy). Since Data ID is passed to main strategy methods, one is encouraged to derive
+    their own classes implementing different 'caching' strategy based on different Data IDs. Any other data can be
+    transformed right after they are loaded through the function transform ('upload' and 'transform' functions are
+    essentially glued).
 
     To create instances of the class, we follow Builder pattern so one is encouraged to use one of the derived
     classes of TimeIntegrationBuilder (or its own builder derived from TimeIntegrationBuilder) which should be passed
@@ -36,12 +39,18 @@ class TimeIntegration(ABC):
         self.t = None
         self.other_data_access_strategy = None
         self.solution_access_strategy = None
-        self.transform_scalar_series = None
-        self.transform_vector_series = None
-        self.series_id_to_upload = None
+        self.transform = None
         self._data_path = data_path
         self._solution_time_series = {}
         self._other_data = {}
+
+    def __getattr__(self, data_id):
+        data = self.other_data_access_strategy.access_data(self._other_data, data_id,
+                                                           partial(upload_and_transform_any,
+                                                                   self.upload_data,
+                                                                   self.transform),
+                                                           data_id)
+        return data
 
     @property
     def data_path(self) -> str:
@@ -50,30 +59,6 @@ class TimeIntegration(ABC):
         :return: data path as a string
         """
         return self._data_path
-
-    @property
-    def scalar_series(self) -> dict:
-        """
-        Returns the real-valued time series associated with time-integration
-        :return: dictionary of real-valued time series
-        """
-        one_d_series_data = self.other_data_access_strategy.access_data(self._other_data, 'scalar_series',
-                                                                        partial(upload_and_transform_any,
-                                                                                self.upload_scalar_series,
-                                                                                self.transform_scalar_series))
-        return one_d_series_data
-
-    @property
-    def vector_series(self) -> dict:
-        """
-        Returns the vector-valued (2D) time series associated with time-integration
-        :return: dictionary of real-valued time series
-        """
-        two_d_series_data = self.other_data_access_strategy.access_data(self._other_data, 'vector_series',
-                                                                        partial(upload_and_transform_any,
-                                                                                self.upload_vector_series,
-                                                                                self.transform_vector_series))
-        return two_d_series_data
 
     @property
     def simulation_configuration(self) -> dict:
@@ -129,14 +114,21 @@ class TimeIntegration(ABC):
                                   ' as an index in a time series')
 
     @abstractmethod
-    def upload_scalar_series(self) -> dict:
-        raise NotImplementedError('Must be implemented. It must return the dictionary containing all summary data, i.e.'
-                                  ' any real-valued time series related to time-integration')
+    def upload_data(self, data_id) -> dict:
+        raise NotImplementedError('Must be implemented. It must return the dictionary containing all the data '
+                                  'physically linked with the data identified by data_id (e.g., it may be all time '
+                                  'series from the same file). The dictionary, apparently, must also contain the data '
+                                  'identified by data_id ')
 
-    @abstractmethod
-    def upload_vector_series(self) -> dict:
-        raise NotImplementedError('Must be implemented. It must return the dictionary containing all summary data, i.e.'
-                                  ' any real-valued time series related to time-integration')
+#    @abstractmethod
+#    def upload_scalar_series(self) -> dict:
+#        raise NotImplementedError('Must be implemented. It must return the dictionary containing all summary data, i.e.'
+#                                  ' any real-valued time series related to time-integration')
+#
+#    @abstractmethod
+#    def upload_vector_series(self) -> dict:
+#        raise NotImplementedError('Must be implemented. It must return the dictionary containing all summary data, i.e.'
+#                                  ' any real-valued time series related to time-integration')
 
     @abstractmethod
     def upload_simulation_configuration(self) -> dict:
@@ -147,71 +139,104 @@ class TimeIntegration(ABC):
 class TimeIntegrationInOldChannelFlow(TimeIntegration):
     """
     Class TimeIntegrationInOldChannelFlow represent time-integration performed by the old channelflow, non-mpi version.
+
+    Its ``other data`` are
+      - T (time)
+      - L2U (time-evolution of the L2-norm of the flow field u, i.e., the fluctuation around the laminar solution)
+      - L2u, L2v, L2w (time-evolution of the L2-norms of the components of the flow field)
+      - D (time-evolution of dissipation)
+      - max_KE (time-evolution of maximum pointwise kinetic energy)
+      - LF (time-evolution of the location of the left front of the spot)
+      - RF (time-evolution of the location of the right front of the spot)
+      - UlamDotU (time-evolution of the scalar product <U_lam, u>, where U_lam is the laminar solution and u is the
+      fluctuation around it)
+      - L2Ulam (time-evolution of the L2-norm of the laminar solution)
+      - L2UlamPlusU (time-evolution of the L2-norm of the full flow field (i.e., of U_lam + u))
+      - DUlamPlusU (time-evolution of dissipation of the full flow field (i.e., of U_lam + u))
+      - ke_z (time-evolution of the xy-averaged kinetic energy)
+      - u_z (time-evolution of the xy-averaged L2-norm of the streamwise velocity)
+      - v_z (time-evolution of the xy-averaged L2-norm of the wall-normal velocity)
     """
     def __init__(self, data_path) -> None:
+        self._scalar_time_series_ids = ('T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF', 'UlamDotU',
+                                        'L2Ulam', 'L2UlamPlusU', 'DUlamPlusU')
+        self._xy_aver_time_series_ids = ('ke_z', 'u_z', 'v_z')
         TimeIntegration.__init__(self, data_path)
         pass
 
     def _get_regexp_for_solution_filenames(self) -> str:
         return '^u(?P<num>\d+[.]?\d*).h5$'
 
+    def upload_simulation_configuration(self) -> dict:
+        _, attrs = self._read_field_and_attrs(0)
+        return {'simulation_configuration': attrs}
+
     def upload_solution(self, t_i) -> Field:
-        field, _ = self.__read_field_and_attrs(t_i)
+        field, _ = self._read_field_and_attrs(t_i)
         return field
 
-    def upload_scalar_series(self) -> dict:
+    def upload_data(self, data_id) -> dict:
         """
         Old version of channel flow has several version of summary data files. We check them all in row trying to find
         a fitting option.
         :return: dict
         """
+
+        if data_id in self._scalar_time_series_ids:
+            data = self._upload_scalar_time_series()
+        elif data_id in self._xy_aver_time_series_ids:
+            data_obj = self._upload_xy_aver_series(data_id)
+            data = {data_id: data_obj}
+        else:
+            raise KeyError('Unsupported data ID passed: {}'.format(data_id))
+        return data
+
+    def _upload_scalar_time_series(self):
         all_cases_of_param_names = [
-            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF', 'Ulam*U', 'L2Ulam', 'L2Ulam+U', 'DUlam+U'],
-            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF', 'Ulam*U', 'L2Ulam', 'L2Ulam+U'],
+            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF', 'UlamDotU', 'L2Ulam', 'L2UlamPlusU',
+             'DUlamPlusU'],
+            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF', 'UlamDotU', 'L2Ulam', 'L2UlamPlusU'],
             ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF'],
             ['T', 'L2U', 'D', 'max_KE', 'LF', 'RF'],
             ['T', 'L2U', 'D', 'max_KE'],
         ]
-        summary_data = None
+        scalar_time_series = None
         for param_names in all_cases_of_param_names:
             try:
-                summary_data = parse_datafile(os.path.join(self._data_path, 'summary.txt'), param_names,
-                                              [float for _ in range(len(param_names))])
+                scalar_time_series = parse_datafile(os.path.join(self._data_path, 'summary.txt'), param_names,
+                                                    [float for _ in range(len(param_names))])
                 break
             except Exception as e_:
                 pass
-        if summary_data is None:
+        if scalar_time_series is None:
             print('No supported version of summary file is found. Last exception thrown while parsing summary file: '
                   '{}'.format(e_))
-        return summary_data
+        return scalar_time_series
 
-    def upload_vector_series(self) -> Field:
+    def _upload_xy_aver_series(self, data_id) -> Field:
         """
-        Old version of channel flow permits several combinations of vector series files, namely, xy-averaged ||u||,
-        xy-averaged ||v||, xy-averaged kinetic energy and spanwise component of the laminar flow. We try to upload as
-        many of them as possible.
+        Old version of channel flow permits several combinations of vector series files, namely, xy-averaged ||u||_2,
+        xy-averaged ||v||_2, xy-averaged kinetic energy and spanwise component of the laminar flow.
         :return: Field
         """
 
-        elements = []
-        element_names = []
-        for element_id, filename in zip(('ke', 'u', 'v'), ('avenergy.txt', 'av_u.txt', 'av_v.txt')):
-            if element_id in self.series_id_to_upload:
-                t, q = parse_timed_numdatafile(os.path.join(self._data_path, filename))
-                elements.append(np.array(q))
-                element_names.append(element_id)
+        if data_id == 'ke_z':
+            filename = 'avenergy.txt'
+        elif data_id == 'u_z':
+            filename = 'av_u.txt'
+        elif data_id == 'v_z':
+            filename = 'av_v.txt'
+        else:
+            raise KeyError('Unsupported data ID passed: {}'.format(data_id))
+        t, q = parse_timed_numdatafile(os.path.join(self._data_path, filename))
         t, z = parse_timed_numdatafile(os.path.join(self._data_path, 'z.txt'))
         space = Space([np.array(t), np.array(z[0])])
         space.set_elements_names(['t', 'z'])
-        field_ = Field(elements, space)
-        field_.set_elements_names(element_names)
+        field_ = Field([np.array(q)], space)
+        field_.set_elements_names([data_id])
         return field_
 
-    def upload_simulation_configuration(self) -> dict:
-        _, attrs = self.__read_field_and_attrs(0)
-        return attrs
-
-    def __read_field_and_attrs(self, t_i):
+    def _read_field_and_attrs(self, t_i):
         field_name = 'u{:.3f}.h5'.format(self.t[t_i])
         field, attrs = read_field(os.path.join(self._data_path, field_name))
         return field, attrs
@@ -227,10 +252,8 @@ class TimeIntegrationBuilder:
     real-valued series and DataAccessStrategy for solution fields.
     """
     def __init__(self, ti_class):
-        self.series_id_to_upload = []
         self._ti_class = ti_class
-        self._transform_scalar_series = None
-        self._transform_vector_series = None
+        self._transform = None
         self._other_data_access_strategy = None
         self._solution_access_strategy = None
 
@@ -238,17 +261,11 @@ class TimeIntegrationBuilder:
         ti_obj = self._ti_class(ti_path)
         ti_obj.other_data_access_strategy = self._other_data_access_strategy
         ti_obj.solution_access_strategy = self._solution_access_strategy
-        ti_obj.transform_scalar_series = self._transform_scalar_series
-        ti_obj.transform_vector_series = self._transform_vector_series
-        ti_obj.series_id_to_upload = self.series_id_to_upload
+        ti_obj.transform = self._transform
         return ti_obj
 
     @abstractmethod
-    def create_transform_scalar_series(self) -> None:
-        raise NotImplementedError('Must be implemented')
-
-    @abstractmethod
-    def create_transform_vector_series(self) -> None:
+    def create_transform(self) -> None:
         raise NotImplementedError('Must be implemented')
 
     @abstractmethod
@@ -268,10 +285,7 @@ class NoBackupAccessBuilder(TimeIntegrationBuilder):
     def __init__(self, ti_class):
         TimeIntegrationBuilder.__init__(self, ti_class)
 
-    def create_transform_scalar_series(self) -> None:
-        pass
-
-    def create_transform_vector_series(self) -> None:
+    def create_transform(self) -> None:
         pass
 
     def create_other_data_access_strategy(self) -> None:
@@ -291,17 +305,16 @@ class TimeIntegrationBuildDirector:
     def __init__(self, builder):
         self.__builder = builder
 
-    def construct(self, series_id_to_upload):
-        self.__builder.create_transform_scalar_series()
-        self.__builder.create_transform_vector_series()
+    def construct(self):
+        self.__builder.create_transform()
         self.__builder.create_other_data_access_strategy()
         self.__builder.create_solution_access_strategy()
-        self.__builder.series_id_to_upload=series_id_to_upload
 
 
-def upload_and_transform_any(uploader: Callable[[], dict],
-                             transformer: Optional[Callable[[dict], dict]] = None) -> dict:
-    data = uploader()
+def upload_and_transform_any(uploader: Callable[..., dict],
+                             transformer: Optional[Callable[[dict], dict]],
+                             *upload_func_args) -> dict:
+    data = uploader(*upload_func_args)
     if transformer is not None:
         data = transformer(data)
     return data
