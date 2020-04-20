@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Optional, SupportsFloat, Mapping
+from typing import SupportsFloat, Mapping
 from typing_extensions import Literal
 
 from thequickmath.aux import index_for_almost_exact_coincidence
 from thequickmath.field import *
 from comsdk.comaux import parse_datafile, parse_timed_numdatafile, parse_by_named_regexp
 from restools.function import Function
-from restools.data_access_strategies import free_data_after_access_strategy
 
 
 class TimeIntegration(ABC):
@@ -40,16 +39,13 @@ class TimeIntegration(ABC):
         self.t = None
         self.other_data_access_strategy = None
         self.solution_access_strategy = None
-        self.transform = None
         self._data_path = data_path
         self._solution_time_series = {}
         self._other_data = {}
 
     def __getattr__(self, data_id):
         data = self.other_data_access_strategy.access_data(self._other_data, data_id,
-                                                           partial(upload_and_transform_any,
-                                                                   self.upload_data,
-                                                                   self.transform),
+                                                           self.upload_data,
                                                            data_id)
         return data
 
@@ -231,84 +227,6 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
         field_name = 'u{:.3f}.h5'.format(self.t[t_i])
         field, attrs = read_field(os.path.join(self._data_path, field_name))
         return field, attrs
-
-
-class TimeIntegrationBuilder:
-    """
-    Class TimeIntegrationBuilder is a base builder class for TimeIntegration objects (see Builder pattern for details).
-    Since TimeIntegration is a base class itself and cannot thus be created, one should pass a concrete TimeIntegration
-    class to the constructor.
-
-    One should derive its own class from this base one which will specify transform and DataAccessStrategy for
-    real-valued series and DataAccessStrategy for solution fields.
-    """
-    def __init__(self, ti_class):
-        self._ti_class = ti_class
-        self._transform = None
-        self._other_data_access_strategy = None
-        self._solution_access_strategy = None
-
-    def get_timeintegration(self, ti_path):
-        ti_obj = self._ti_class(ti_path)
-        ti_obj.other_data_access_strategy = self._other_data_access_strategy
-        ti_obj.solution_access_strategy = self._solution_access_strategy
-        ti_obj.transform = self._transform
-        return ti_obj
-
-    @abstractmethod
-    def create_transform(self) -> None:
-        raise NotImplementedError('Must be implemented')
-
-    @abstractmethod
-    def create_other_data_access_strategy(self) -> None:
-        raise NotImplementedError('Must be implemented')
-
-    @abstractmethod
-    def create_solution_access_strategy(self) -> None:
-        raise NotImplementedError('Must be implemented')
-
-
-class NoBackupAccessBuilder(TimeIntegrationBuilder):
-    """
-    Class NoBackupAccessBuilder implements TimeIntegrationBuilder with such DataAccessStrategy for solution fields and
-    other data that they never stored in TimeIntegration.
-    """
-    def __init__(self, ti_class):
-        TimeIntegrationBuilder.__init__(self, ti_class)
-
-    def create_transform(self) -> None:
-        pass
-
-    def create_other_data_access_strategy(self) -> None:
-        self._other_data_access_strategy = free_data_after_access_strategy
-
-    def create_solution_access_strategy(self) -> None:
-        self._solution_access_strategy = free_data_after_access_strategy
-
-
-class TimeIntegrationBuildDirector:
-    """
-    Class TimeIntegrationBuildDirector is a director in Builder pattern and is used for builder construction.
-    A common use is that one create a builder, then create a director passing the builder to the constructor of the
-    director and then call director's method construct(). After that, the builder can be used to produce TimeIntegration
-    instances -- as many as one wants.
-    """
-    def __init__(self, builder):
-        self.__builder = builder
-
-    def construct(self):
-        self.__builder.create_transform()
-        self.__builder.create_other_data_access_strategy()
-        self.__builder.create_solution_access_strategy()
-
-
-def upload_and_transform_any(uploader: Callable[..., dict],
-                             transformer: Optional[Callable[[dict], dict]],
-                             *upload_func_args) -> dict:
-    data = uploader(*upload_func_args)
-    if transformer is not None:
-        data = transformer(data)
-    return data
 
 
 def build_timeintegration_sequence(res, tasks, timeintegration_builder,
