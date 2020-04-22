@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import SupportsFloat, Mapping
+from typing import SupportsFloat, Mapping, Any, Type
 from typing_extensions import Literal
 
+from restools.function import Function
 from thequickmath.aux import index_for_almost_exact_coincidence
 from thequickmath.field import *
-from comsdk.comaux import parse_datafile, parse_timed_numdatafile, parse_by_named_regexp
-from restools.function import Function
-
+from comsdk.comaux import parse_datafile, parse_timed_numdatafile, parse_by_named_regexp, StandardisedNaming
 
 class TimeIntegration(ABC):
     """
@@ -132,7 +131,7 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
       - L2U (time-evolution of the L2-norm of the flow field u, i.e., the fluctuation around the laminar solution)
       - L2u, L2v, L2w (time-evolution of the L2-norms of the components of the flow field)
       - D (time-evolution of dissipation)
-      - max_KE (time-evolution of maximum pointwise kinetic energy)
+      - max_ke (time-evolution of maximum pointwise kinetic energy)
       - LF (time-evolution of the location of the left front of the spot)
       - RF (time-evolution of the location of the right front of the spot)
       - UlamDotU (time-evolution of the scalar product <U_lam, u>, where U_lam is the laminar solution and u is the
@@ -145,7 +144,7 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
       - v_z (time-evolution of the xy-averaged L2-norm of the wall-normal velocity)
     """
     def __init__(self, data_path) -> None:
-        self._scalar_time_series_ids = ('T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF', 'UlamDotU',
+        self._scalar_time_series_ids = ('T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_ke', 'LF', 'RF', 'UlamDotU',
                                         'L2Ulam', 'L2UlamPlusU', 'DUlamPlusU')
         self._xy_aver_time_series_ids = ('ke_z', 'u_z', 'v_z')
         TimeIntegration.__init__(self, data_path)
@@ -180,12 +179,12 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
 
     def _upload_scalar_time_series(self):
         all_cases_of_param_names = [
-            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF', 'UlamDotU', 'L2Ulam', 'L2UlamPlusU',
+            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_ke', 'LF', 'RF', 'UlamDotU', 'L2Ulam', 'L2UlamPlusU',
              'DUlamPlusU'],
-            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF', 'UlamDotU', 'L2Ulam', 'L2UlamPlusU'],
-            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_KE', 'LF', 'RF'],
-            ['T', 'L2U', 'D', 'max_KE', 'LF', 'RF'],
-            ['T', 'L2U', 'D', 'max_KE'],
+            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_ke', 'LF', 'RF', 'UlamDotU', 'L2Ulam', 'L2UlamPlusU'],
+            ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_ke', 'LF', 'RF'],
+            ['T', 'L2U', 'D', 'max_ke', 'LF', 'RF'],
+            ['T', 'L2U', 'D', 'max_ke'],
         ]
         scalar_time_series = None
         for param_names in all_cases_of_param_names:
@@ -227,6 +226,21 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
         field_name = 'u{:.3f}.h5'.format(self.t[t_i])
         field, attrs = read_field(os.path.join(self._data_path, field_name))
         return field, attrs
+
+
+class Perturbation:
+    """
+    Class Perturbation wraps up the information about a particular perturbation. By the ``information``, we understand
+    perturbation properties (they are passed to the class constructor and can then be accessed as ordinary attributes of
+    Perturbation instances). They are often encoded into a perturbation filename, so we provide a factory method
+    Perturbation.from_filename for creating instances of Perturbation based on the standardised filename.
+    """
+    def __init__(self, props: Mapping[str, Any]):
+        self.__dict__.update(props)
+
+    @classmethod
+    def from_filename(cls, standardised_name: Type[StandardisedNaming], filename: str):
+        return Perturbation(standardised_name.parse(filename))
 
 
 def build_timeintegration_sequence(res, tasks, timeintegration_builder,
