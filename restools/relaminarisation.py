@@ -22,7 +22,7 @@ def upload_relaminarisation_time(ti_obj: ti.TimeIntegration, data_id, max_ke_eps
                        this as a relaminarisation event
     :return: dict {'t_relam': float}
     """
-    return {'t_relam': get_relaminarisation_time(ti_obj.T, ti_obj.max_KE, max_ke_eps)}
+    return {'t_relam': get_relaminarisation_time(ti_obj.T, ti_obj.max_ke, max_ke_eps)}
 
 
 def expected_relam_time(ts: Sequence[float], Res: Sequence[float], delta_Re: float) -> np.ndarray:
