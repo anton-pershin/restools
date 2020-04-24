@@ -129,9 +129,9 @@ def ensure_data_id_supported(func_=None, *, ids=()):
     """
     def decorator_(func_):
         @functools.wraps(func_)
-        def wrapper_(ti_obj, data_id):
+        def wrapper_(ti_obj, data_id, *args, **kwargs):
             if data_id in ids:
-                return func_(ti_obj, data_id)
+                return func_(ti_obj, data_id, *args, **kwargs)
             else:
                 return None
         return wrapper_
