@@ -97,31 +97,61 @@ class LaminarisationStudy:
     initialisation for TimeIntegration instances. Thus, if one has several thousands of simulations to analyse, calling
     LaminarisationStudy.timeintegrations() may be time-consuming.
     """
-    def __init__(self, paths, rp_naming: Type[comaux.StandardisedNaming],
+    def __init__(self, paths,
                  data_dir_naming: Type[comaux.StandardisedNaming],
-                 ti_builder: TimeIntegrationBuilder,
-                 energy_rtol=1e-05,
-                 energy_atol=1e-08):
+                 ti_builder: TimeIntegrationBuilder):
         """
-        Walks through the task paths, in each of which random perturbations with standardised naming rp_naming and
-        associated data directories of time-integrations with standardised naming data_dir_naming can be found and
-        builds necessary inner objects.
 
         :param paths: task paths in which random perturbations and time-integration directories are located
-        :param rp_naming: standardised naming of random perturbations (must have ``energy_level`` and ``i`` as
-                          attributes)
         :param data_dir_naming: standardised naming of time-integration directories (must have ``energy_level``
                                 and ``i`` as attributes)
         :param ti_builder: TimeIntegrationBuilder used to create instances of TimeIntegration
-        :param energy_rtol: rtol parameter used for assessing the accuracy of energy levels (see numpy.isclose docs)
-        :param energy_atol: atol parameter used for assessing the accuracy of energy levels (see numpy.isclose docs)
         """
         self._energy_levels = []
         self._paths = paths
         self._random_perturbations = []  # first index == energy_level_id, second index == path id,
         # self._random_perturbations[i][j] = Perturbation instance
+        self._timeintegrations = []  # first index == energy_level_id,
+        # second index == path id, third index coincides with the third index of self._random_perturbations
+        # lazy initialisation for self._timeintegrations is implemented
         self._ti_builder = ti_builder
         self._data_dir_naming = data_dir_naming
+
+    @classmethod
+    def from_paths(cls, paths, rp_naming: Type[comaux.StandardisedNaming],
+                   data_dir_naming: Type[comaux.StandardisedNaming],
+                   ti_builder: TimeIntegrationBuilder,
+                   energy_rtol=1e-05,
+                   energy_atol=1e-08):
+        study = LaminarisationStudy(paths, data_dir_naming, ti_builder)
+        study._upload(rp_naming, energy_rtol, energy_atol)
+        return study
+
+    @classmethod
+    def from_tasks(cls, res: Research, tasks: Sequence[int], rp_naming: Type[comaux.StandardisedNaming],
+                   data_dir_naming: Type[comaux.StandardisedNaming],
+                   ti_builder: TimeIntegrationBuilder,
+                   energy_rtol=1e-05,
+                   energy_atol=1e-08):
+        return LaminarisationStudy.from_paths([res.get_task_path(t) for t in tasks], rp_naming, data_dir_naming,
+                                              ti_builder, energy_rtol, energy_atol)
+
+    @property
+    def energy_levels(self) -> Sequence[float]:
+        return self._energy_levels
+
+    def _upload(self, rp_naming, energy_rtol, energy_atol) -> None:
+        """
+        Walks through the task paths, in each of which random perturbations with standardised naming rp_naming and
+        associated data directories of time-integrations with standardised naming data_dir_naming can be found and
+        builds necessary inner objects.
+
+        :param rp_naming: standardised naming of random perturbations (must have ``energy_level`` and ``i`` as
+                          attributes)
+        :param energy_rtol: rtol parameter used for assessing the accuracy of energy levels (see numpy.isclose docs)
+        :param energy_atol: atol parameter used for assessing the accuracy of energy levels (see numpy.isclose docs)
+        """
+
         for path_id, path in enumerate(self._paths):
             found_data = comaux.find_all_files_by_standardised_naming(rp_naming, path)
             if found_data is None or found_data == []:
@@ -142,21 +172,7 @@ class LaminarisationStudy:
         self._energy_levels = [e for e, rps in energy_level_and_rps_zipped_sorted]
         self._random_perturbations = [rps for e, rps in energy_level_and_rps_zipped_sorted]
         self._timeintegrations = [None for _ in self._energy_levels]  # first index == energy_level_id,
-        # second index == path id, third index coincides with the third index of self._random_perturbations
-        # lazy initialisation for self._timeintegrations is implemented
 
-    @classmethod
-    def from_tasks(cls, res: Research, tasks: Sequence[int], rp_naming: Type[comaux.StandardisedNaming],
-                   data_dir_naming: Type[comaux.StandardisedNaming],
-                   ti_builder: TimeIntegrationBuilder,
-                   energy_rtol=1e-05,
-                   energy_atol=1e-08):
-        return LaminarisationStudy([res.get_task_path(t) for t in tasks], rp_naming, data_dir_naming, ti_builder,
-                                   energy_rtol, energy_atol)
-
-    @property
-    def energy_levels(self) -> Sequence[float]:
-        return self._energy_levels
 
     def perturbations(self, energy_level_id: Optional[int] = None) -> Sequence[Perturbation]:
         """
@@ -193,6 +209,32 @@ class LaminarisationStudy:
                 self._timeintegrations[energy_level_id] = self._get_ti_at_energy_level(energy_level_id)
             tis += functools.reduce(add, self._timeintegrations[energy_level_id])
         return tis
+
+    def make_subsample(self, n: int):
+        """
+        Return a sub-sample of current LaminarisationStudy implying that at each energy level, there is now n
+        perturbations/timeintegrations.
+
+        :param n: number of perturbations/timeintegrations per each energy level
+        :return: instance of LaminarisationStudy using a sub-sample of perturbations/simulations
+        :rtype LaminarisationStudy
+
+        """
+        study = LaminarisationStudy(self._paths, self._data_dir_naming, self._ti_builder)
+        study._energy_levels = self.energy_levels
+        for e_i in range(len(study._energy_levels)):
+            study._random_perturbations.append([[] for _ in study._paths])
+            total_rps_per_energy_level = np.sum([len(rps) for rps in self._random_perturbations[e_i]])
+            # probability of getting an i-th path
+            pk = [len(rps) / float(total_rps_per_energy_level) for rps in self._random_perturbations[e_i]]
+            pathrv = scipy.stats.rv_discrete(name='pathrv', values=(np.arange(len(pk)), pk))
+            path_indices = pathrv.rvs(size=n)
+            for path_i in path_indices:
+                rp_i = np.random.randint(len(self._random_perturbations[e_i][path_i]))
+                study._random_perturbations[e_i][path_i].append(self._random_perturbations[e_i][path_i][rp_i])
+#                study._timeintegrations[e_i].append(self._timeintegrations[e_i][path_i][rp_i])
+        study._timeintegrations = [None for _ in study._energy_levels]
+        return study
 
     def _get_ti_at_energy_level(self, energy_level_id: int):
         tis = [[] for _ in self._paths]

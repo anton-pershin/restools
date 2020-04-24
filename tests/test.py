@@ -73,3 +73,8 @@ ax.bar(energy_levels, p_lam, 2*bar_width,
 ax.plot(es, fitting(es), linewidth=2)
 ax.grid()
 plt.show()
+
+# Subsampling of laminarisation study
+lam_substudy = lam_study.make_subsample(5)
+for e_i in range(len(lam_substudy.energy_levels)):
+    print(len(lam_substudy.perturbations(e_i)), len(lam_substudy.timeintegrations(e_i)))
