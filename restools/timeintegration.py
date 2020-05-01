@@ -187,16 +187,17 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
             ['T', 'L2U', 'D', 'max_ke'],
         ]
         scalar_time_series = None
+        last_exception = None
         for param_names in all_cases_of_param_names:
             try:
                 scalar_time_series = parse_datafile(os.path.join(self._data_path, 'summary.txt'), param_names,
                                                     [float for _ in range(len(param_names))])
                 break
             except Exception as e_:
-                pass
+                last_exception = e_
         if scalar_time_series is None:
             print('No supported version of summary file is found. Last exception thrown while parsing summary file: '
-                  '{}'.format(e_))
+                  '{}'.format(last_exception))
         return scalar_time_series
 
     def _upload_xy_aver_series(self, data_id) -> Field:
