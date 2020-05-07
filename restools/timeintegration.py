@@ -35,9 +35,9 @@ class TimeIntegration(ABC):
     """
 
     def __init__(self, data_path) -> None:
-        self.t = None
         self.other_data_access_strategy = None
         self.solution_access_strategy = None
+        self._t = None
         self._data_path = data_path
         self._solution_time_series = {}
         self._other_data = {}
@@ -47,6 +47,16 @@ class TimeIntegration(ABC):
                                                            self.upload_data,
                                                            data_id)
         return data
+
+    @property
+    def t(self) -> np.ndarray:
+        """
+        Returns times at which full solution can be taken
+        :return: times as array
+        """
+        if self._t is None:
+            self._load_time_domain()
+        return self._t
 
     @property
     def data_path(self) -> str:
@@ -72,8 +82,6 @@ class TimeIntegration(ABC):
         :param t: time at which solution is accessed
         :return: solution at time t as an instance of Field
         """
-        if self.t is None:
-            self._load_time_domain()
         t_i = index_for_almost_exact_coincidence(self.t, t)
         sol_field = self.solution_access_strategy.access_data(self._solution_time_series, t_i,
                                                               self.upload_solution, t_i)
@@ -90,14 +98,17 @@ class TimeIntegration(ABC):
         return ic_field
 
     def _load_time_domain(self) -> None:
+        if not os.path.exists(self._data_path):
+            raise FileNotFoundError('Path does not exist: {}'.format(self._data_path))
         _, _, filenames = next(os.walk(self._data_path))
         regexp_pattern = self._get_regexp_for_solution_filenames()
-        self.t = []
+        self._t = []
         for filename in filenames:
             params_dict = parse_by_named_regexp(regexp_pattern, filename)
             if params_dict is not None:
-                self.t.append(float(params_dict['num']))
+                self._t.append(float(params_dict['num']))
         self.t.sort()
+        self._t = np.array(self.t)
 
     @abstractmethod
     def _get_regexp_for_solution_filenames(self) -> str:
