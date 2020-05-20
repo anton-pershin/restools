@@ -60,7 +60,7 @@ class SingleConfiguration:
       TurbTrajectory instance
 
     rps_info
-      A list of RPInfo instances
+      A 2D-list of RPInfo instances (first index = energy level id)
 
     p_lam
       A list of laminarisation probabilities indexed by energy level id
