@@ -49,6 +49,13 @@ class Summary(JsonSerializable):
       SimulationsInfo object with simulations where full flow fields were saved with small time intervals (dT = 1 or 10)
     """
 
-    def __init__(self, edge_states_info: SimulationsInfo, simulations_with_full_fields_saved: SimulationsInfo):
+    def __init__(self, edge_states_info: SimulationsInfo, simulations_with_full_fields_saved: SimulationsInfo,
+                 seed: int, seed_for_bayesian_example: int, default_sample_number: int,
+                 sample_size_per_energy_level: int, minimum_sample_size_per_energy_level: int):
         self.edge_states_info = edge_states_info
         self.simulations_with_full_fields_saved = simulations_with_full_fields_saved
+        self.seed = seed
+        self.seed_for_bayesian_example = seed_for_bayesian_example
+        self.default_sample_number = default_sample_number
+        self.sample_size_per_energy_level = sample_size_per_energy_level
+        self.minimum_sample_size_per_energy_level = minimum_sample_size_per_energy_level

@@ -9,24 +9,9 @@ from restools.timeintegration_builders import get_ti_builder
 from restools.flow_stats import Ensemble, BadEnsemble
 from restools.plotting import label_axes
 from papers.jfm2020_nonlinear_robustness.data import Summary
+from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary
 from comsdk.research import Research
 from comsdk.comaux import load_from_json
-
-
-class DistributionSummary:
-    def __init__(self):
-        self.means = []
-        self.lower_quartiles = []
-        self.upper_quartiles = []
-        self.lower_deciles = []
-        self.upper_deciles = []
-
-    def append(self, mean=None, lower_quartile=None, upper_quartile=None, lower_decile=None, upper_decile=None):
-        self.means.append(mean)
-        self.lower_quartiles.append(lower_quartile)
-        self.upper_quartiles.append(upper_quartile)
-        self.lower_deciles.append(lower_decile)
-        self.upper_deciles.append(upper_decile)
 
 
 def _plot_ke_distribution(ax, obj_to_rasterize: List[Any], color, distr_summary: DistributionSummary):
