@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from restools.timeintegration_builders import get_ti_builder
 from restools.plotting import label_axes, build_zooming_axes_for_plotting_with_box, rasterize_and_save, reduce_eps_size
 from papers.jfm2020_probabilistic_protocol.data import Summary, SingleConfiguration
-from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM
+from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM, plot_p_lam
 from comsdk.comaux import load_from_json
 from comsdk.research import Research
 
@@ -50,32 +50,6 @@ def _plot_ics(ax, conf: SingleConfiguration, res: Research, energy_levels_number
                data_dir=conf.turb_trajectory.data_dir,
                color='tomato')
     return lam_rps, turb_rps
-
-
-def _plot_p_lam(ax, summary: Summary, conf: SingleConfiguration):
-    p_lam_neg_B = np.zeros_like(summary.energy_levels)
-    p_lam_pos_B = np.zeros_like(summary.energy_levels)
-    for e_i in range(len(summary.energy_levels)):
-        def _add_next_rp_info(acc, rp_info):
-            # acc = (N_total_neg_B, N_lam_pos_B, N_lam_neg_B)
-            if rp_info.B < 0:
-                return acc[0] + 1, acc[1], acc[2] + rp_info.is_laminarised
-            else:
-                return acc[0], acc[1] + rp_info.is_laminarised, acc[2]
-
-        N_total = len(conf.rps_info[e_i])
-        N_total_neg_B, N_lam_pos_B, N_lam_neg_B = reduce(_add_next_rp_info, conf.rps_info[e_i], (0, 0, 0))
-        N_total_pos_B = N_total - N_total_neg_B
-        p_lam_neg_B[e_i] = float(N_lam_neg_B) / N_total_neg_B
-        p_lam_pos_B[e_i] = float(N_lam_pos_B) / N_total_pos_B
-
-    adjusted_energy_levels = 0.5 * np.r_[[0.], np.array(summary.energy_levels) + np.array(summary.energy_deviations)]
-    p_lam_neg_B = np.r_[[1.], p_lam_neg_B]
-    p_lam_pos_B = np.r_[[1.], p_lam_pos_B]
-    bar_width = 0.0004
-    ax.bar(adjusted_energy_levels, p_lam_neg_B / 2., 2*bar_width, alpha=0.75, color='magenta', label=r'$B < 0$')
-    ax.bar(adjusted_energy_levels, p_lam_pos_B / 2., 2*bar_width, bottom=p_lam_neg_B / 2., alpha=0.75, color='blue',
-           label=r'$B \geq 0$')
 
 
 def _plot_rps_in_box(box_ax, rps, color, parent_box):
@@ -152,7 +126,7 @@ if __name__ == '__main__':
     for ax, conf, label in zip(axes, summary.confs, (r'(a) $Re= 400$', r'(b)  $Re= 500$', r'(c)  $Re= 700$')):
         fitting = LaminarisationProbabilityFittingFunction2020JFM.from_data(0.5 * np.array([0.] + summary.energy_levels),
                                                                             np.array([1.] + conf.p_lam))
-        _plot_p_lam(ax, summary, conf)
+        plot_p_lam(ax, summary, conf)
         ax.plot([conf.edge_state_energy_mean, conf.edge_state_energy_mean], [0.0, 1.0], '--',
                 linewidth=2,
                 color='black',
@@ -209,7 +183,7 @@ if __name__ == '__main__':
     conf_unctrl = summary.confs[1]
     conf_ctrl = summary.confs[3]
     fig, ax = plt.subplots(1, 1, figsize=(12, 4))
-    _plot_p_lam(ax, summary, conf_ctrl)
+    plot_p_lam(ax, summary, conf_ctrl)
     fitting_ctrl = LaminarisationProbabilityFittingFunction2020JFM.from_data(0.5 * np.array([0.] + summary.energy_levels),
                                                                              np.array([1.] + conf_ctrl.p_lam))
     ax.plot([conf_unctrl.edge_state_energy_mean, conf_unctrl.edge_state_energy_mean], [0.0, 1.0], '--',

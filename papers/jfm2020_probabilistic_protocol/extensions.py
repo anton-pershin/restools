@@ -1,10 +1,12 @@
 from typing import Optional, Sequence, Union, Callable
+from functools import reduce
 
 import numpy as np
 from scipy.special import gammainc, gamma
 from scipy.optimize import root_scalar, minimize
 
 from restools.laminarisation_probability import LaminarisationProbabilityFittingFunction
+from papers.jfm2020_probabilistic_protocol.data import Summary, SingleConfiguration
 import comsdk.comaux as comaux
 
 
@@ -104,6 +106,8 @@ class LaminarisationProbabilityFittingFunction2020JFM(LaminarisationProbabilityF
     def energy_close_to_asymptote(self, eps=0.01, bracket=[0., 0.1]):
         if self.asymp + eps >= 1.:
             return 0.
+        while self(bracket[1]) - self.asymp - eps > 0.:
+            bracket[1] *= 2
         sol = root_scalar(lambda e: self(e) - self.asymp - eps, bracket=bracket, method='brentq')
         return sol.root
 
@@ -130,3 +134,42 @@ def relative_probability_increase(fitting_noctrl: Callable[[np.ndarray], np.ndar
     """
     e = np.linspace(0., e_max, 200)
     return np.mean((fitting_ctrl(e) - fitting_noctrl(e)) / fitting_noctrl(e))
+
+
+def plot_p_lam(ax, summary: Summary, conf: SingleConfiguration, separate_bars_for_neg_and_pos_B=True, color='blue',
+               zorder=0, lower_deciles=None, upper_deciles=None):
+    p_lam_neg_B = np.zeros_like(summary.energy_levels)
+    p_lam_pos_B = np.zeros_like(summary.energy_levels)
+    p_lam = np.zeros_like(summary.energy_levels)
+    for e_i in range(len(summary.energy_levels)):
+        def _add_next_rp_info(acc, rp_info):
+            # acc = (N_total_neg_B, N_lam_pos_B, N_lam_neg_B)
+            if rp_info.B < 0:
+                return acc[0] + 1, acc[1], acc[2] + rp_info.is_laminarised
+            else:
+                return acc[0], acc[1] + rp_info.is_laminarised, acc[2]
+
+        N_total = len(conf.rps_info[e_i])
+        N_total_neg_B, N_lam_pos_B, N_lam_neg_B = reduce(_add_next_rp_info, conf.rps_info[e_i], (0, 0, 0))
+        N_total_pos_B = N_total - N_total_neg_B
+        p_lam_neg_B[e_i] = float(N_lam_neg_B) / N_total_neg_B
+        p_lam_pos_B[e_i] = float(N_lam_pos_B) / N_total_pos_B
+        p_lam[e_i] = float(N_lam_pos_B + N_lam_neg_B) / N_total
+
+    adjusted_energy_levels = 0.5 * np.r_[[0.], np.array(summary.energy_levels) + np.array(summary.energy_deviations)]
+    p_lam_neg_B = np.r_[[1.], p_lam_neg_B]
+    p_lam_pos_B = np.r_[[1.], p_lam_pos_B]
+    bar_width = 0.0004
+    if separate_bars_for_neg_and_pos_B:
+        ax.bar(adjusted_energy_levels, p_lam_neg_B / 2., 2*bar_width, alpha=0.75, color='magenta', label=r'$B < 0$')
+        ax.bar(adjusted_energy_levels, p_lam_pos_B / 2., 2*bar_width, bottom=p_lam_neg_B / 2., alpha=0.75, color='blue',
+               label=r'$B \geq 0$')
+    else:
+        p_lam = np.r_[[1.], p_lam]
+        if lower_deciles is None:
+            ax.bar(adjusted_energy_levels, p_lam, 2*bar_width, alpha=0.75, color=color, zorder=zorder)
+        else:
+            ax.bar(adjusted_energy_levels, p_lam, 2*bar_width,
+                   yerr=np.transpose(np.c_[p_lam - lower_deciles, upper_deciles - p_lam]), alpha=0.75,
+                   color=color, zorder=zorder, capsize=3, ecolor='gray')
+
