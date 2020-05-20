@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import os
 import functools
-from typing import Optional, Type, Sequence, Union, Tuple
+from typing import Optional, Type, Sequence, Union, Tuple, Callable
 from operator import itemgetter, add
 
 import numpy as np
@@ -191,14 +191,26 @@ class LaminarisationStudy:
         return tis
 
 
-class LaminarisationProbabilityEstimation(ABC):
+class LaminarisationProbabilityEstimation:
     """
-    Class LaminarisationProbabilityEstimation is an abstract class which should be used for the implementation of the
-    algorithms estimating the laminarisation probability using the data presented by LaminarisationStudy. One only needs
-    to implement method _make_estimation for that.
+    Class LaminarisationProbabilityEstimation implements a generic algorithm estimating the laminarisation probability
+    using the data presented by LaminarisationStudy. It makes use of the strategy pattern to specify a concrete
+    estimation algorithm encapsulated in function _make_estimation which must be passed to the constructor.
     """
-    def __init__(self, study: LaminarisationStudy):
+    def __init__(self, study: LaminarisationStudy,
+                 make_estimation: Callable[[Sequence[float], Sequence[float]],
+                                           Tuple[Sequence[float], Optional[Sequence[ScipyDistribution]]]]):
         self._study = study
+        self._make_estimation = make_estimation
+
+    @classmethod
+    def from_bayesian_perspective(cls, study: LaminarisationStudy,
+                                  priors: Optional[Callable[[Sequence[float], int], Tuple[float, float]]] = None):
+        return cls(study, functools.partial(make_bayesian_estimation, priors=priors))
+
+    @classmethod
+    def from_frequentist_perspective(cls, study: LaminarisationStudy):
+        return cls(study, make_frequentist_estimation)
 
     def estimate(self, selector=lambda rp: rp) -> Tuple[Sequence[float], Optional[Sequence[ScipyDistribution]]]:
         """
@@ -233,49 +245,41 @@ class LaminarisationProbabilityEstimation(ABC):
                                   'corresponding distributions (instances of ScipyDistribution) or None')
 
 
-class LaminarisationProbabilityBayesianEstimation(LaminarisationProbabilityEstimation):
+def make_bayesian_estimation(n_lam_array: Sequence[float], n_trans_array: Sequence[float],
+                             priors: Optional[Callable[[Sequence[float], Sequence[float], int], Tuple[float, float]]]
+                             = None) -> Tuple[Sequence[float], Optional[Sequence[ScipyDistribution]]]:
     """
-    Class LaminarisationProbabilityBayesianEstimation implements Bayesian estimation of the laminarisation probability.
-    The laminarisation probability then has a posterior distribution of the form beta(a_0 + n_lam, b_0 + n_trans), where
+    Implements Bayesian estimation of the laminarisation probability. The laminarisation probability then has a
+    posterior distribution of the form beta(a_0 + n_lam, b_0 + n_trans), where
     a_0 and b_0 are the prior distribution parameters (the prior is also a beta distribution) and n_lam(n_trans) are
     the number of laminarising (transitioning) RPs at a given energy level. Parameters of the prior distribution
-    at i-th energy level are taken to be the posterior parameters from (i-1)-th energy level accounted for the total
-    number of RPs at a particular energy level (to avoid accumulation of "certainty") as that's the best knowledge we
-    have at hands. For the very first energy level, we use maximum entropy prior parameters: a_0 = 1, b_0 = 1.
+    at i-th energy level are taken from function priors which takes the array of n_lam, the array of n_trans and i as
+    inputs. If priors are not given, least informative prior distribution is assumed (=> a_0 = 1, b_0 = 1).
     """
-    def __init__(self, study: LaminarisationStudy):
-        super().__init__(study)
+    distrs = []
+    point_estimates = []
+    for n_lam, n_trans in zip(n_lam_array, n_trans_array):
+        if priors is None:
+            a_0 = 1.
+            b_0 = 1.
+        else:
+            a_0, b_0 = priors(n_lam, n_trans_array, len(point_estimates))
+        a = a_0 + n_lam
+        b = b_0 + n_trans
+        distrs.append(ScipyDistribution(scipy.stats.beta, a, b))
+        point_estimates.append(distrs[-1].mean())
+    return np.array(point_estimates), distrs
 
-    def _make_estimation(self, n_lam_array: Sequence[float], n_trans_array: Sequence[float]) \
+
+def make_frequentist_estimation(n_lam_array: Sequence[float], n_trans_array: Sequence[float]) \
             -> Tuple[Sequence[float], Optional[Sequence[ScipyDistribution]]]:
-        distrs = []
-        point_estimates = []
-        a_0 = 1.  # prior parameters for the lowest energy level (actually, we should use a_0 = 11)
-        b_0 = 1.  # prior parameters for the lowest energy level (actually, we should use b_0 = 1)
-        for n_lam, n_trans in zip(n_lam_array, n_trans_array):
-            a = a_0 + n_lam
-            b = b_0 + n_trans
-            distrs.append(ScipyDistribution(scipy.stats.beta, a, b))
-            point_estimates.append(distrs[-1].mean())
-            a_0 = (a - 1.) / 2. + 1.  # set prior parameters for the next energy level
-            b_0 = (b - 1.) / 2. + 1.  # set prior parameters for the next energy level
-        return np.array(point_estimates), distrs
-
-
-class LaminarisationProbabilityFrequentistEstimation(LaminarisationProbabilityEstimation):
     """
-    Class LaminarisationProbabilityFrequentistEstimation implements frequentist estimation of the laminarisation
-    probability which is simply the number of laminarising RPs divided by the total number of RPs at a given energy
-    level.
+    Implements frequentist estimation of the laminarisation probability which is simply the number of laminarising
+    RPs divided by the total number of RPs at a given energy level.
     """
-    def __init__(self, study: LaminarisationStudy):
-        super().__init__(study)
-
-    def _make_estimation(self, n_lam_array: Sequence[float], n_trans_array: Sequence[float]) \
-            -> Tuple[Sequence[float], Optional[Sequence[ScipyDistribution]]]:
-        point_estimates = [float(n_lam) / (n_lam + n_trans) for n_lam, n_trans in zip(n_lam_array, n_trans_array)]
-        distrs = None
-        return point_estimates, distrs
+    point_estimates = [float(n_lam) / (n_lam + n_trans) for n_lam, n_trans in zip(n_lam_array, n_trans_array)]
+    distrs = None
+    return point_estimates, distrs
 
 
 class LaminarisationProbabilityFittingFunction(ABC):
