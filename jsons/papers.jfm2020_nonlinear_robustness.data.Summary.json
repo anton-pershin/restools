@@ -26,5 +26,10 @@
             [50, 33, -1, 49, 48]
         ],
         "task_for_uncontrolled_case": 52
-    }
+    },
+    "seed": 486832,
+    "seed_for_bayesian_example": 1,
+    "default_sample_number": 1000,
+    "sample_size_per_energy_level": 10,
+    "minimum_sample_size_per_energy_level": 5
 }
