@@ -13,7 +13,7 @@ from papers.jfm2020_nonlinear_robustness.data import Summary
 from papers.jfm2020_nonlinear_robustness.extensions import turbulent_dissipation_rate, exponential_noise_distribution
 from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbProto
 from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM
-from comsdk.comaux import load_from_json, dump_to_json
+from comsdk.comaux import load_from_json
 from comsdk.research import Research
 
 if __name__ == '__main__':
@@ -41,7 +41,8 @@ if __name__ == '__main__':
     turb_diss_no_ctrl = turbulent_dissipation_rate(summary.simulations_with_full_fields_saved.task_for_uncontrolled_case,
                                                    0., 0., res_diss, ti_builder)
     for ax, lam_score in zip(axes, (lam_score_no_ctrl, lam_score_exp_no_ctrl)):
-        ax.plot(summary.p_lam_info.frequencies, len(summary.p_lam_info.frequencies)*[lam_score * lam_diss_no_ctrl + (1. - lam_score) * turb_diss_no_ctrl],
+        ax.plot(summary.p_lam_info.frequencies,
+                len(summary.p_lam_info.frequencies)*[lam_score * lam_diss_no_ctrl + (1. - lam_score) * turb_diss_no_ctrl],
                 'k-', linewidth=2, label=r'$A = 0$')
     for a_i, amplitude in enumerate(summary.p_lam_info.amplitudes):
         for omega_i, frequency in enumerate(summary.p_lam_info.frequencies):
@@ -73,7 +74,8 @@ if __name__ == '__main__':
         ax.set_xlabel(r'$\omega$', fontsize=16)
         ax.set_xscale('log', basex=2)
         ax.set_xticks(summary.p_lam_info.frequencies)
-        ax.set_xticklabels([r'$2^{' + str(int(np.log2(summary.p_lam_info.frequencies[i]))) + r'}$' for i in range(len(summary.p_lam_info.frequencies))])
+        ax.set_xticklabels([r'$2^{' + str(int(np.log2(summary.p_lam_info.frequencies[i]))) + r'}$'
+                            for i in range(len(summary.p_lam_info.frequencies))])
         label_axes(ax, label=title, loc=(0.47, 1.05), fontsize=16)
     axes[0].set_ylabel(r'$Re \times \mathbb{E} [\epsilon | A, \omega]$', fontsize=16)
     axes[1].legend(bbox_to_anchor=(0.72, 0.0, 0.9, 1.02), loc='upper center',

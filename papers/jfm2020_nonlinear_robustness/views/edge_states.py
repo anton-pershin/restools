@@ -10,7 +10,7 @@ import matplotlib.gridspec as gridspec
 
 from restools.timeintegration_builders import get_ti_builder
 from restools.flow_stats import Ensemble, BadEnsemble
-from restools.plotting import cell_heatmap, rasterise_and_save, reduce_eps_size
+from restools.plotting import cell_heatmap
 from restools.plotting import label_axes
 from papers.jfm2020_nonlinear_robustness.data import Summary
 from comsdk.research import Research
