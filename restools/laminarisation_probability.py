@@ -2,11 +2,13 @@ from abc import ABC, abstractmethod
 import os
 import functools
 from typing import Optional, Type, Sequence, Union, Tuple, Callable
+from typing_extensions import Literal
 from operator import itemgetter, add
 
 import numpy as np
 import scipy.stats
 from scipy.optimize import root_scalar
+from scipy.integrate import simps
 
 from restools.relaminarisation import is_relaminarised
 from restools.timeintegration import TimeIntegration, Perturbation
@@ -15,6 +17,10 @@ import comsdk.comaux as comaux
 from comsdk.research import Research
 from thequickmath.aux import index_for_almost_exact_coincidence_unsorted
 from thequickmath.stats import ScipyDistribution
+
+
+Prior = Union[Callable[[Sequence[float], Sequence[float], int], Tuple[float, float]],
+              Literal['uniform', 'jeffreys', 'haldane']]
 
 
 class LaminarisationStudy:
@@ -96,7 +102,6 @@ class LaminarisationStudy:
             if found_data is None or found_data == []:
                 raise ValueError("No random perturbations found in {}".format(path))
             for file_, data in found_data:
-                print(os.path.join(path, file_))
                 energy = data['energy_level']
                 try:
                     energy_level_id = index_for_almost_exact_coincidence_unsorted(self._energy_levels, energy,
@@ -112,10 +117,11 @@ class LaminarisationStudy:
         self._energy_levels = [e for e, rps in energy_level_and_rps_zipped_sorted]
         self._random_perturbations = [rps for e, rps in energy_level_and_rps_zipped_sorted]
         self._timeintegrations = [None for _ in self._energy_levels]  # first index == energy_level_id,
-        for e_i in range(len(self._energy_levels)):
-            print('Energy level {}'.format(self._energy_levels[e_i]))
-            for path_i in range(len(self._paths)):
-                print('\t{} RPs in {}'.format(len(self._random_perturbations[e_i][path_i]), self._paths[path_i]))
+        if self._debug:
+            for e_i in range(len(self._energy_levels)):
+                print('Energy level {}'.format(self._energy_levels[e_i]))
+                for path_i in range(len(self._paths)):
+                    print('\t{} RPs in {}'.format(len(self._random_perturbations[e_i][path_i]), self._paths[path_i]))
 
     def perturbations(self, energy_level_id: Optional[int] = None) -> Sequence[Perturbation]:
         """
@@ -205,7 +211,7 @@ class LaminarisationProbabilityEstimation:
 
     @classmethod
     def from_bayesian_perspective(cls, study: LaminarisationStudy,
-                                  priors: Optional[Callable[[Sequence[float], int], Tuple[float, float]]] = None):
+                                  priors: Optional[Callable[[Sequence[float], int], Tuple[float, float]]] = 'jeffreys'):
         return cls(study, functools.partial(make_bayesian_estimation, priors=priors))
 
     @classmethod
@@ -246,22 +252,29 @@ class LaminarisationProbabilityEstimation:
 
 
 def make_bayesian_estimation(n_lam_array: Sequence[float], n_trans_array: Sequence[float],
-                             priors: Optional[Callable[[Sequence[float], Sequence[float], int], Tuple[float, float]]]
-                             = None) -> Tuple[Sequence[float], Optional[Sequence[ScipyDistribution]]]:
+                             priors: Prior = 'jeffreys') \
+        -> Tuple[Sequence[float], Optional[Sequence[ScipyDistribution]]]:
     """
     Implements Bayesian estimation of the laminarisation probability. The laminarisation probability then has a
     posterior distribution of the form beta(a_0 + n_lam, b_0 + n_trans), where
     a_0 and b_0 are the prior distribution parameters (the prior is also a beta distribution) and n_lam(n_trans) are
     the number of laminarising (transitioning) RPs at a given energy level. Parameters of the prior distribution
     at i-th energy level are taken from function priors which takes the array of n_lam, the array of n_trans and i as
-    inputs. If priors are not given, least informative prior distribution is assumed (=> a_0 = 1, b_0 = 1).
+    inputs. Alternatively, one can specify one of the following standard priors: uniform prior (a_0 = 1, b_0 = 1),
+    Jeffreys' prior (a_0 = 1/2, b_0 = 1/2) and Haldane (a_0 = 0, b_0 = 0).
     """
     distrs = []
     point_estimates = []
     for n_lam, n_trans in zip(n_lam_array, n_trans_array):
-        if priors is None:
+        if priors == 'uniform':
             a_0 = 1.
             b_0 = 1.
+        elif priors == 'jeffreys':
+            a_0 = 1./2.
+            b_0 = 1./2.
+        elif priors == 'haldane':
+            a_0 = 0.
+            b_0 = 0.
         else:
             a_0, b_0 = priors(n_lam, n_trans_array, len(point_estimates))
         a = a_0 + n_lam
@@ -295,15 +308,16 @@ class LaminarisationProbabilityFittingFunction(ABC):
     def __call__(self, e: Union[float, Sequence[float]]):
         raise NotImplementedError('Must be implemented. It must return the function value at certain energy')
 
-    def expected_probability(self, e_max=0.04) -> float:
+    def expected_probability(self, e_max=0.04, noise_distribution=lambda e, e_max: 1./e_max) -> float:
         """
         Returns the expected probability (the limits of the energy for integration: [0; e_max])
 
         :param e_max: maximum kinetic energy of perturbations
+        :param noise_distribution: distribution of the energy of external disturbances
         :return: the expected probability
         """
-        es = np.linspace(0., e_max, 200)
-        return np.mean(self(es))
+        es = np.linspace(0., e_max, 201)
+        return simps(noise_distribution(es, e_max)*self(es), es)
 
     def energy_with_99_lam_prob(self, bracket=[0., 0.02]) -> float:
         """

@@ -432,41 +432,21 @@ def label_axes(ax, label, loc=None, **kwargs):
                 xycoords='axes fraction',
                 **kwargs)
 
-def rasterize_and_save(fname, rasterize_list=None, fig=None, dpi=None,
-                       savefig_kw={}):
-    """Save a figure with raster and vector components
-    This function lets you specify which objects to rasterize at the export
-    stage, rather than within each plotting call. Rasterizing certain
-    components of a complex figure can significantly reduce file size.
-    Inputs
-    ------
-    fname : str
-        Output filename with extension
-    rasterize_list : list (or object)
-        List of objects to rasterize (or a single object to rasterize)
-    fig : matplotlib figure object
-        Defaults to current figure
-    dpi : int
-        Resolution (dots per inch) for rasterizing
-    savefig_kw : dict
-        Extra keywords to pass to matplotlib.pyplot.savefig
-    If rasterize_list is not specified, then all contour, pcolor, and
-    collects objects (e.g., ``scatter, fill_between`` etc) will be
-    rasterized
-    Note: does not work correctly with round=True in Basemap
-    Example
-    -------
-    Rasterize the contour, pcolor, and scatter plots, but not the line
-    >>> import matplotlib.pyplot as plt
-    >>> from numpy.random import random
-    >>> X, Y, Z = random((9, 9)), random((9, 9)), random((9, 9))
-    >>> fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(ncols=2, nrows=2)
-    >>> cax1 = ax1.contourf(Z)
-    >>> cax2 = ax2.scatter(X, Y, s=Z)
-    >>> cax3 = ax3.pcolormesh(Z)
-    >>> cax4 = ax4.plot(Z[:, 0])
-    >>> rasterize_list = [cax1, cax2, cax3]
-    >>> rasterize_and_save('out.svg', rasterize_list, fig=fig, dpi=300)
+def rasterise_and_save(fname, rasterise_list=None, fig=None, dpi=None, savefig_kw={}) -> None:
+    """
+    Saves a figure with raster and vector components. This function lets you specify which objects to rasterise at the
+    export stage, rather than within each plotting call. Rasterising certain components of a complex figure can
+    significantly reduce file size. If rasterise_list is not specified, then all contour, pcolor, and collects objects
+    (e.g., ``scatter, fill_between`` etc) will be rasterised.
+    Adapted from https://gist.github.com/hugke729/78655b82b885cde79e270f1c30da0b5f
+
+    :param fname: output filename with extension
+    :param rasterise_list: list of objects to rasterize (or a single object to rasterize)
+    :param fig: defaults to current figure
+    :param dpi: resolution (dots per inch) for rasterising
+    :param savefig_kw: extra keywords to pass to matplotlib.pyplot.savefig
+
+    :warning: does not work correctly with round=True in Basemap
     """
 
     # Behave like pyplot and act on current figure if no figure is specified
@@ -474,11 +454,12 @@ def rasterize_and_save(fname, rasterize_list=None, fig=None, dpi=None,
 
     # Need to set_rasterization_zorder in order for rasterizing to work
     zorder = -5  # Somewhat arbitrary, just ensuring less than 0
+    zorder_min = -1000  # We will preserve all zorders by shifting them down to this amount
 
-    if rasterize_list is None:
+    if rasterise_list is None:
         # Have a guess at stuff that should be rasterised
         types_to_raster = ['QuadMesh', 'Contour', 'collections']
-        rasterize_list = []
+        rasterise_list = []
 
         print("""
         No rasterize_list specified, so the following objects will
@@ -487,14 +468,14 @@ def rasterize_and_save(fname, rasterize_list=None, fig=None, dpi=None,
         for ax in fig.get_axes():
             for item in ax.get_children():
                 if any(x in str(item) for x in types_to_raster):
-                    rasterize_list.append(item)
-        print('\n'.join([str(x) for x in rasterize_list]))
+                    rasterise_list.append(item)
+        print('\n'.join([str(x) for x in rasterise_list]))
     else:
         # Allow rasterize_list to be input as an object to rasterize
-        if type(rasterize_list) != list:
-            rasterize_list = [rasterize_list]
+        if type(rasterise_list) != list:
+            rasterise_list = [rasterise_list]
 
-    for item in rasterize_list:
+    for item in rasterise_list:
 
         # Whether or not plot is a contour plot is important
         is_contour = (isinstance(item, matplotlib.contour.QuadContourSet) or
@@ -519,22 +500,29 @@ def rasterize_and_save(fname, rasterize_list=None, fig=None, dpi=None,
             # For contour plots, need to set each part of the contour
             # collection individually
             for contour_level in item.collections:
-                contour_level.set_zorder(zorder - 1)
+                contour_level.set_zorder(zorder_min + contour_level.get_zorder())
                 contour_level.set_rasterized(True)
         elif is_patch_list:
             # For list of patches, need to set zorder for each patch
             for patch in item:
                 curr_ax = patch.axes
                 curr_ax.set_rasterization_zorder(zorder)
-                patch.set_zorder(zorder - 1)
+                patch.set_zorder(zorder_min + patch.get_zorder())
                 patch.set_rasterized(True)
+            if hasattr(item, 'errorbar'):
+                if item.errorbar is not None:
+                    data_line = item.errorbar.lines[0]
+                    caplines_tuple = item.errorbar.lines[1]
+                    barlinecols_tuple = item.errorbar.lines[2]
+                    for obj in [data_line] + list(caplines_tuple) + list(barlinecols_tuple):
+                        if obj is not None:
+                            obj.set_zorder(zorder_min + obj.get_zorder())
         else:
             # For all other objects, we can just do it all at once
             curr_ax = item.axes
             curr_ax.set_rasterization_zorder(zorder)
             item.set_rasterized(True)
-            item.set_zorder(zorder - 1)
-
+            item.set_zorder(zorder_min + item.get_zorder())
     # dpi is a savefig keyword argument, but treat it as special since it is
     # important to this function
     if dpi is not None:
@@ -543,6 +531,14 @@ def rasterize_and_save(fname, rasterize_list=None, fig=None, dpi=None,
     # Save resulting figure
     fig.savefig(fname, **savefig_kw)
 
-def reduce_eps_size(fname):
-    command_line = 'epstopdf {}; pdftops -eps {}.pdf'.format(fname, fname[:-4])
+
+def reduce_eps_size(fname: str) -> None:
+    """
+    Reduces the size of an eps-file fname by converting it to pdf and then back to eps.
+
+    :param fname: eps-file which will be reduced
+    """
+    pdf_name = '{}.pdf'.format(fname[:-4])
+    command_line = 'epstopdf {}; pdftops -eps {}'.format(fname, pdf_name)
     subprocess.call([command_line], shell=True)
+    os.remove(pdf_name)
