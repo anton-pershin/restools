@@ -10,7 +10,7 @@ import matplotlib.gridspec as gridspec
 
 from restools.timeintegration_builders import get_ti_builder
 from restools.flow_stats import Ensemble, BadEnsemble
-from restools.plotting import cell_heatmap, rasterize_and_save, reduce_eps_size
+from restools.plotting import cell_heatmap, rasterise_and_save, reduce_eps_size
 from restools.plotting import label_axes
 from papers.jfm2020_nonlinear_robustness.data import Summary
 from comsdk.research import Research
@@ -202,6 +202,6 @@ if __name__ == '__main__':
         plt.tight_layout()
         plt.subplots_adjust(top=0.93)
 #        fname = 'edgetracking_C_A_02_omega_1_16.eps'
-#        rasterize_and_save(fname, rasterize_list=obj_to_rasterize, fig=fig, dpi=300)
+#        rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
 #        reduce_eps_size(fname)
         plt.show()
