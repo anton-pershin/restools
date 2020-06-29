@@ -3,7 +3,6 @@ from typing import SupportsFloat, Mapping, Any, Type
 from typing_extensions import Literal
 
 from restools.function import Function
-from thequickmath.aux import index_for_almost_exact_coincidence
 from thequickmath.field import *
 from comsdk.comaux import parse_datafile, parse_timed_numdatafile, parse_by_named_regexp, StandardisedNaming
 

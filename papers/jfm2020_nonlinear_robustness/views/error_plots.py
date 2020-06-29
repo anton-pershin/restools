@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-from restools.laminarisation_probability import make_bayesian_estimation, make_frequentist_estimation
+from restools.laminarisation_probability import make_bayesian_estimation
 from restools.plotting import label_axes, rasterise_and_save, reduce_eps_size
 from papers.jfm2020_nonlinear_robustness.data import Summary
 from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary, \

@@ -8,14 +8,13 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from restools.timeintegration_builders import get_ti_builder
-from restools.plotting import label_axes, rasterise_and_save, reduce_eps_size
-from restools.laminarisation_probability import make_bayesian_estimation, make_frequentist_estimation, LaminarisationStudy, LaminarisationProbabilityEstimation
+from restools.plotting import label_axes
+from restools.laminarisation_probability import LaminarisationStudy, LaminarisationProbabilityEstimation
 from papers.jfm2020_nonlinear_robustness.data import Summary
-from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary, \
-    find_lam_event_number_by_random_sampling, plot_distribution_summary, exponential_noise_distribution
+from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary, exponential_noise_distribution
 from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbProto
-from papers.jfm2020_probabilistic_protocol.extensions import RandomPerturbationFilenameJFM2020, DataDirectoryJFM2020AProbabilisticProtocol, LaminarisationProbabilityFittingFunction2020JFM, \
-    plot_p_lam_from_conf, plot_p_lam
+from papers.jfm2020_probabilistic_protocol.extensions import RandomPerturbationFilenameJFM2020, \
+    DataDirectoryJFM2020AProbabilisticProtocol, LaminarisationProbabilityFittingFunction2020JFM
 from thequickmath.stats import EmpiricalDistribution
 from comsdk.comaux import load_from_json, dump_to_json
 from comsdk.research import Research
@@ -151,7 +150,8 @@ if __name__ == '__main__':
         ax.set_ylabel(ylabel, fontsize=16)
         ax.set_xscale('log', basex=2)
         ax.set_xticks(summary.p_lam_info.frequencies)
-        ax.set_xticklabels([r'$2^{' + str(int(np.log2(summary.p_lam_info.frequencies[i]))) + r'}$' for i in range(len(summary.p_lam_info.frequencies))])
+        ax.set_xticklabels([r'$2^{' + str(int(np.log2(summary.p_lam_info.frequencies[i]))) + r'}$'
+                            for i in range(len(summary.p_lam_info.frequencies))])
         label_axes(ax, label=title, loc=(0.47, 1.05), fontsize=16)
     for ax in (ax_s, ax_s_exp):
         ax.set_ylim((0., 1.))
