@@ -1,7 +1,9 @@
+import os
 from typing import List, Sequence, Any
 
 import numpy as np
 
+from restools.flow_stats import Ensemble, BadEnsemble
 from papers.jfm2020_probabilistic_protocol.data import RPInfo
 
 
@@ -52,3 +54,26 @@ def plot_distribution_summary(ax, distr: DistributionSummary, x: Sequence[float]
     obj_to_rasterize.append(obj)
     obj = ax.fill_between(x, distr.lower_deciles, distr.upper_deciles, **deciles_kwargs)
     obj_to_rasterize.append(obj)
+
+
+def turbulent_dissipation_rate(task, a, omega, res, ti_builder):
+    print('Processing task {}'.format(task))
+    if task == -1:
+        return None
+    task_path = res.get_task_path(task)
+    tis = [ti_builder.get_timeintegration(os.path.join(task_path, 'data-500'))]
+    try:
+        ens = Ensemble(tis, max_ke_eps=0.02)
+        diss_distr = ens.dissipation_distribution()
+    except BadEnsemble as e:
+        print('Configuration "A = {}, omega = {} (task {})" is skipped because turbulent trajectories are '
+              'too short'.format(a, omega, task))
+        return None
+    else:
+        return diss_distr.mean()
+
+
+def exponential_noise_distribution(e, e_max):
+    # parameter lambda for the exponential distribution is equal to 6/e_max (=> expectation is e_max/6)
+    l = 6./e_max
+    return l / (1. - np.exp(-l*e_max)) * np.exp(-l*e)

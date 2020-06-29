@@ -1,0 +1,87 @@
+import os
+import sys
+sys.path.append(os.getcwd())
+
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+
+from restools.timeintegration_builders import get_ti_builder
+from restools.laminar_flows import PlaneCouetteFlow, PlaneCouetteFlowWithInPhaseSpanwiseOscillations
+from restools.plotting import label_axes
+from papers.jfm2020_nonlinear_robustness.data import Summary
+from papers.jfm2020_nonlinear_robustness.extensions import turbulent_dissipation_rate, exponential_noise_distribution
+from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbProto
+from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM
+from comsdk.comaux import load_from_json, dump_to_json
+from comsdk.research import Research
+
+if __name__ == '__main__':
+    matplotlib.rc('text', usetex=True)
+    matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
+    matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsfonts}"]
+
+    summary = load_from_json(Summary)
+    summary_prob_proto = load_from_json(SummaryProbProto)
+    ti_builder = get_ti_builder()
+    res_diss = Research.open(summary.simulations_with_full_fields_saved.res_id)
+    energies = 0.5 * np.r_[[0.], summary_prob_proto.energy_levels]
+    re = summary.p_lam_info.re
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
+    turb_diss = np.zeros((len(summary.p_lam_info.amplitudes), len(summary.p_lam_info.frequencies)))
+    lam_scores = np.zeros((len(summary.p_lam_info.amplitudes), len(summary.p_lam_info.frequencies)))
+    lam_scores_exp = np.zeros((len(summary.p_lam_info.amplitudes), len(summary.p_lam_info.frequencies)))
+    max_turb_diss_rate = 1000.
+    fitting_no_ctrl = LaminarisationProbabilityFittingFunction2020JFM.from_data(
+        0.5 * np.array([0.] + summary_prob_proto.energy_levels), np.array([1.] + summary_prob_proto.confs[1].p_lam))
+    lam_score_no_ctrl = fitting_no_ctrl.expected_probability()
+    lam_score_exp_no_ctrl = fitting_no_ctrl.expected_probability(noise_distribution=exponential_noise_distribution)
+    lam_diss_no_ctrl = re * PlaneCouetteFlow(re=re).dissipation_rate
+    turb_diss_no_ctrl = turbulent_dissipation_rate(summary.simulations_with_full_fields_saved.task_for_uncontrolled_case,
+                                                   0., 0., res_diss, ti_builder)
+    for ax, lam_score in zip(axes, (lam_score_no_ctrl, lam_score_exp_no_ctrl)):
+        ax.plot(summary.p_lam_info.frequencies, len(summary.p_lam_info.frequencies)*[lam_score * lam_diss_no_ctrl + (1. - lam_score) * turb_diss_no_ctrl],
+                'k-', linewidth=2, label=r'$A = 0$')
+    for a_i, amplitude in enumerate(summary.p_lam_info.amplitudes):
+        for omega_i, frequency in enumerate(summary.p_lam_info.frequencies):
+            if a_i < len(summary.simulations_with_full_fields_saved.amplitudes):
+                task = summary.simulations_with_full_fields_saved.tasks[a_i][omega_i]
+                turb_diss_ = turbulent_dissipation_rate(task, amplitude, frequency, res_diss, ti_builder)
+            else:
+                turb_diss_ = 0.
+            if turb_diss_ is None:
+                turb_diss_ = 0.
+            if turb_diss_ != 0. and turb_diss_ < max_turb_diss_rate:
+                max_turb_diss_rate = turb_diss_
+            turb_diss[a_i][omega_i] = turb_diss_
+            lam_scores[a_i][omega_i] = summary.p_lam_info.s[a_i][omega_i][1]
+            lam_scores_exp[a_i][omega_i] = summary.p_lam_info.s_exp[a_i][omega_i][1]
+    for a_i, amplitude in enumerate(summary.p_lam_info.amplitudes):
+        for omega_i, frequency in enumerate(summary.p_lam_info.frequencies):
+            if turb_diss[a_i][omega_i] == 0.:
+                turb_diss[a_i][omega_i] = max_turb_diss_rate
+        lam_diss = np.array([re * PlaneCouetteFlowWithInPhaseSpanwiseOscillations(
+          re=re, a=amplitude, omega=frequency).dissipation_rate for omega in summary.p_lam_info.frequencies])
+        axes[0].plot(summary.p_lam_info.frequencies, lam_scores[a_i] * lam_diss + (1. - lam_scores[a_i]) * turb_diss[a_i],
+                     'o-', linewidth=2, label=r'$A = ' + str(amplitude) + r'$')
+        axes[1].plot(summary.p_lam_info.frequencies,
+                     lam_scores_exp[a_i] * lam_diss + (1. - lam_scores_exp[a_i]) * turb_diss[a_i],
+                     'o-', linewidth=2, label=r'$A = ' + str(amplitude) + r'$')
+    for ax, ylabel, title in zip(axes, (r'$S$', r'$E_a$', r'$E_{flex}$'), (r'(a)', r'(b)')):
+        ax.grid()
+        ax.set_xlabel(r'$\omega$', fontsize=16)
+        ax.set_xscale('log', basex=2)
+        ax.set_xticks(summary.p_lam_info.frequencies)
+        ax.set_xticklabels([r'$2^{' + str(int(np.log2(summary.p_lam_info.frequencies[i]))) + r'}$' for i in range(len(summary.p_lam_info.frequencies))])
+        label_axes(ax, label=title, loc=(0.47, 1.05), fontsize=16)
+    axes[0].set_ylabel(r'$Re \times \mathbb{E} [\epsilon | A, \omega]$', fontsize=16)
+    axes[1].legend(bbox_to_anchor=(0.72, 0.0, 0.9, 1.02), loc='upper center',
+                   ncol=1, fancybox=True, fontsize=12)
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.9, right=0.88, wspace=0.14)
+    fname = 'expected_diss_rate.eps'
+    plt.savefig(fname)
+#    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
+#    reduce_eps_size(fname)
+    plt.show()

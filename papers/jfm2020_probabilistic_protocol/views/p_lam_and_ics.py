@@ -9,7 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from restools.timeintegration_builders import get_ti_builder
-from restools.plotting import label_axes, build_zooming_axes_for_plotting_with_box, rasterize_and_save, reduce_eps_size
+from restools.plotting import label_axes, build_zooming_axes_for_plotting_with_box, rasterise_and_save, reduce_eps_size
 from papers.jfm2020_probabilistic_protocol.data import Summary, SingleConfiguration
 from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM, plot_p_lam
 from comsdk.comaux import load_from_json
@@ -101,7 +101,7 @@ if __name__ == '__main__':
                 obj_to_rasterize.append(lines[0])
         label_axes(ax, label=label, loc=(0.33, 1.04), fontsize=20)
     fname = 'ics_uniform_B.eps'
-    rasterize_and_save(fname, rasterize_list=obj_to_rasterize, fig=fig, dpi=300)
+    rasterise_and_save(fname, rasterize_list=obj_to_rasterize, fig=fig, dpi=300)
     reduce_eps_size(fname)
     plt.show()
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
         lines = _plot_rps_in_box(zoom_ax, rps, color, parent_box)
         obj_to_rasterize.append(lines[0])
     fname = 'ics_uniform_B_osc.eps'
-    rasterize_and_save(fname, rasterize_list=obj_to_rasterize, fig=fig, dpi=300)
+    rasterise_and_save(fname, rasterize_list=obj_to_rasterize, fig=fig, dpi=300)
     reduce_eps_size(fname)
     plt.show()
 

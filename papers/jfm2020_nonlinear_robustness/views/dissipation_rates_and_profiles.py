@@ -9,6 +9,7 @@ from restools.flow_stats import Ensemble, BadEnsemble
 from restools.laminar_flows import PlaneCouetteFlow, PlaneCouetteFlowWithInPhaseSpanwiseOscillations
 from restools.plotting import label_axes
 from papers.jfm2020_nonlinear_robustness.data import Summary
+from papers.jfm2020_nonlinear_robustness.extensions import turbulent_dissipation_rate
 from comsdk.research import Research
 from comsdk.comaux import load_from_json
 from thequickmath.differentiation.finite_differences import fd
@@ -53,21 +54,7 @@ if __name__ == '__main__':
         turb_diss_means = []
         for omega_i, omega in enumerate(summary.simulations_with_full_fields_saved.frequencies):
             task = summary.simulations_with_full_fields_saved.tasks[a_i][omega_i]
-            print('Processing task {}'.format(task))
-            if task == -1:
-                turb_diss_means.append(None)
-                continue
-            task_path = res.get_task_path(task)
-            tis = [ti_builder.get_timeintegration(os.path.join(task_path, 'data-500'))]
-            try:
-                ens = Ensemble(tis, max_ke_eps=0.02)
-                diss_distr = ens.dissipation_distribution()
-            except BadEnsemble as e:
-                print('Configuration "A = {}, omega = {} (task {})" is skipped because turbulent trajectories are '
-                      'too short'.format(a, omega, task))
-                turb_diss_means.append(None)
-            else:
-                turb_diss_means.append(diss_distr.mean())
+            turb_diss_means.append(turbulent_dissipation_rate(task, a, omega, res, ti_builder))
         lam_diss_rate_means = [re * PlaneCouetteFlowWithInPhaseSpanwiseOscillations(
           re=re, a=a, omega=omega).dissipation_rate for omega in summary.simulations_with_full_fields_saved.frequencies]
         lines = axes[1].plot(freqs, turb_diss_means, 'o-', label=r'$A = ' + str(a) + r'$')
