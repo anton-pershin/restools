@@ -7,7 +7,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from restools.laminarisation_probability import make_bayesian_estimation, make_frequentist_estimation
-from restools.plotting import label_axes, rasterize_and_save, reduce_eps_size
+from restools.plotting import label_axes, rasterise_and_save, reduce_eps_size
 from papers.jfm2020_nonlinear_robustness.data import Summary
 from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary, \
     find_lam_event_number_by_random_sampling, plot_distribution_summary
@@ -84,6 +84,6 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.subplots_adjust(top=0.92, hspace=0.25, wspace=0.2)
     fname = 'errors.eps'
-    rasterize_and_save(fname, rasterize_list=obj_to_rasterize, fig=fig, dpi=300)
+    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
     reduce_eps_size(fname)
     plt.show()
