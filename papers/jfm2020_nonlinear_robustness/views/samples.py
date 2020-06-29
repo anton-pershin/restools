@@ -7,13 +7,14 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from restools.timeintegration_builders import get_ti_builder
-from restools.plotting import label_axes
+from restools.plotting import label_axes, rasterise_and_save, reduce_eps_size
 from restools.laminarisation_probability import make_bayesian_estimation, make_frequentist_estimation
 from papers.jfm2020_nonlinear_robustness.data import Summary
 from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary, \
     find_lam_event_number_by_random_sampling, plot_distribution_summary
 from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbProto
-from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM, plot_p_lam
+from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM, \
+    plot_p_lam_from_conf, plot_p_lam
 from thequickmath.stats import EmpiricalDistribution
 from comsdk.comaux import load_from_json
 from comsdk.research import Research
@@ -77,28 +78,29 @@ if __name__ == '__main__':
             p_lam_upper_decile[e_i] = deciles[1]
 
         fitting_distrs.append(fitting_distr)
-        plot_p_lam(ax, summary_prob_proto, conf, separate_bars_for_neg_and_pos_B=False, color='lightpink', zorder=0,
-                   lower_deciles=np.r_[[1.], p_lam_lower_decile], upper_deciles=np.r_[[1.], p_lam_upper_decile])
+        plot_p_lam_from_conf(ax, summary_prob_proto, conf, separate_bars_for_neg_and_pos_B=False, color='lightpink',
+                             zorder=0, lower_deciles=np.r_[[1.], p_lam_lower_decile],
+                             upper_deciles=np.r_[[1.], p_lam_upper_decile], obj_to_rasterize=obj_to_rasterize)
         plot_distribution_summary(ax, fitting_distr, energies_for_plotting, obj_to_rasterize)
         ax.grid()
         label_axes(ax, label=label, loc=(0.5, 1.05), fontsize=16)
 
     # PLOT ONE RANDOM SAMPLE AND RESULTING CONFIDENCE BAND
 
-    obj_to_rasterize = []
     n_per_energy_level = summary.sample_size_per_energy_level
     seed = summary.seed_for_bayesian_example
     for ax_sample, conf, label in zip((axes[0, 0], axes[1, 0]), (conf_unctrl, conf_ctrl), (r'(a)', r'(c)')):
+        print('Processing configuration "{}"'.format(conf.description))
         n_lam = find_lam_event_number_by_random_sampling(conf.rps_info, 2, n_per_energy_level, seed)[0]
-#        p_lam_means, p_lam_distrs = make_bayesian_estimation(np.sum(n_lam, axis=0), n_lam.shape[0]*n_per_energy_level - np.sum(n_lam, axis=0))
         p_lam_means, p_lam_distrs = make_bayesian_estimation(n_lam, n_per_energy_level - n_lam)
         p_lam = np.r_[[1.], p_lam_means]
         p_lam_lower_decile = np.r_[[1.], [d.ppf(0.1) for d in p_lam_distrs]]
         p_lam_upper_decile = np.r_[[1.], [d.ppf(0.9) for d in p_lam_distrs]]
-        bar_width = 0.0004
-        ax_sample.bar(energies, p_lam, 2*bar_width,
-                      yerr=np.transpose(np.c_[p_lam - p_lam_lower_decile, p_lam_upper_decile - p_lam]), alpha=0.75,
-                      color='lightpink', zorder=0, capsize=3, ecolor='gray')
+        plot_p_lam(ax_sample, energies, p_lam, color='lightpink', zorder=0, lower_deciles=p_lam_lower_decile,
+                   upper_deciles=p_lam_upper_decile, obj_to_rasterize=obj_to_rasterize)
+        for data, color in zip((p_lam_lower_decile, p_lam_upper_decile), ('red', 'red')):
+            data_fitting = LaminarisationProbabilityFittingFunction2020JFM.from_data(energies, data)
+            ax_sample.plot(energies_for_plotting, data_fitting(energies_for_plotting), linewidth=2, color=color)
         print('\tConstructing confidence bands for a single sample based on Bayesian estimation')
         p_lam_samples = np.array([d.rvs(size=summary.default_sample_number) for d in p_lam_distrs])
         fitting_values = np.zeros((summary.default_sample_number, len(energies_for_plotting)))
@@ -122,10 +124,11 @@ if __name__ == '__main__':
     for ax in axes[:, 0]:
         ax.set_ylabel(r'$P_{lam}$', fontsize=16)
     for ax in axes[1, :]:
-        ax.set_xlabel(r'$\frac{1}{2}||\boldsymbol{u}||^2$', fontsize=16)
+        ax.set_xlabel(r'$E$', fontsize=16)
     plt.tight_layout()
     plt.subplots_adjust(top=0.95, hspace=0.2)
-    fname = 'p_lam_subsampling.png'
+    fname = 'p_lam_subsampling.eps'
     plt.savefig(fname)
-#    reduce_eps_size(fname)
+    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
+    reduce_eps_size(fname)
     plt.show()
