@@ -2,7 +2,7 @@ from typing_extensions import Literal
 import functools
 from abc import abstractmethod
 
-from restools.timeintegration import TimeIntegrationInOldChannelFlow
+from restools.timeintegration import TimeIntegrationChannelFlowV1, TimeIntegrationChannelFlowV2
 from restools.data_access_strategies import free_data_after_access_strategy, hold_data_in_memory_after_access_strategy
 
 
@@ -80,27 +80,30 @@ class TimeIntegrationBuildDirector:
         self.__builder.create_solution_access_strategy()
 
 
-def get_ti_builder(cf_version: Literal['old', 'epfl'] = 'old',
+def get_ti_builder(cf_version: Literal['cfv1', 'cfv2'] = 'cfv1',
                    cache=False, upload_data_extension=None) -> TimeIntegrationBuilder:
     """
     Returns TimeIntegrationBuilder associated with a particular version of channelflow (cf_version), selected
     xy-averaged quantities, uploaded to vector_series, and able to either store or immediately free all the uploaded
     data (nobackup)
 
-    :param cf_version: version of channelflow (can be either 'old' or 'epfl')
+    :param cf_version: version of channelflow (can be either 'cfv1' or 'cfv2')
     :param cache: whether uploaded data should be cached after the use (nobackup=False) or not (nobackup=True)
     :param upload_data_extension: function with decorator ensure_data_id_supported loading additional data by Data ID
     :return: TimeIntegrationBuilder constructed by TimeIntegrationBuildDirector
     """
     ti_base_class = None
-    if cf_version == 'old':
-        ti_base_class = TimeIntegrationInOldChannelFlow
+    if cf_version == 'cfv1':
+        ti_base_class = TimeIntegrationChannelFlowV1
+    elif cf_version == 'cfv2':
+        ti_base_class = TimeIntegrationChannelFlowV2
     else:
         raise NotImplemented('The case cf_version={} must be implemented!'.format(cf_version))
 
     ti_class = ti_base_class
     if upload_data_extension is not None:
         ti_class = type('{}_{}'.format(ti_base_class.__name__, id(upload_data_extension)), (ti_base_class,), {})
+
         def _overridden_upload_data(obj, data_id):
             extra_data = upload_data_extension(obj, data_id)
             if extra_data is None:
@@ -108,13 +111,11 @@ def get_ti_builder(cf_version: Literal['old', 'epfl'] = 'old',
             else:
                 return extra_data
         ti_class.upload_data = _overridden_upload_data
-
     builder = None
     if cache:
         builder = CacheAllAccessBuilder(ti_class)
     else:
         builder = NoBackupAccessBuilder(ti_class)
-
     director = TimeIntegrationBuildDirector(builder)
     director.construct()
     return builder

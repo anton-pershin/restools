@@ -1,10 +1,53 @@
 from abc import ABC, abstractmethod
 from typing import SupportsFloat, Mapping, Any, Type
 from typing_extensions import Literal
+import logging
 
 from restools.function import Function
 from thequickmath.field import *
-from comsdk.comaux import parse_datafile, parse_timed_numdatafile, parse_by_named_regexp, StandardisedNaming
+from comsdk.comaux import parse_datafile, parse_timed_numdatafile, parse_by_named_regexp, StandardisedNaming, \
+    take_value_if_not_none, raise_exception_if_arguments_not_in_keywords_or_none
+
+
+class VelocityFieldFilenameV1(StandardisedNaming):
+    """
+    Class VelocityFieldFilenameV1 represents a standardised filename of any velocity field
+    saved by program couette in channelflow v1.
+    """
+
+    @classmethod
+    def regexp_with_substitutions(cls, t=None) -> str:
+        # r'^u(?P<t>\d*\.\d{3})\.h5'
+        res = r'^u'
+        res += take_value_if_not_none(t, default='(?P<t>\d*\.\d{3})')
+        res += '\.h5'
+        return res
+
+    @classmethod
+    def make_name(cls, **kwargs):
+        raise_exception_if_arguments_not_in_keywords_or_none(['t'], kwargs)
+        return 'u{:.3f}.h5'.format(kwargs['t'])
+
+
+class VelocityFieldFilenameV2(StandardisedNaming):
+    """
+    Class VelocityFieldFilenameV2 represents a standardised filename of any velocity field
+    saved by program simulateflow in channelflow v2.
+    """
+
+    @classmethod
+    def regexp_with_substitutions(cls, t=None) -> str:
+        # r'^u(?P<t>\d*)\.h5'
+        res = r'^u'
+        res += take_value_if_not_none(t, default='(?P<t>\d*)')
+        res += '\.nc'
+        return res
+
+    @classmethod
+    def make_name(cls, **kwargs):
+        raise_exception_if_arguments_not_in_keywords_or_none(['t'], kwargs)
+        return 'u{}.nc'.format(int(kwargs['t']))
+
 
 class TimeIntegration(ABC):
     """
@@ -22,6 +65,9 @@ class TimeIntegration(ABC):
     their own classes implementing different 'caching' strategy based on different Data IDs. Any other data can be
     transformed right after they are loaded through the function transform ('upload' and 'transform' functions are
     essentially glued).
+
+    Also solution_standardised_filename as instance of StandardisedNaming must be set to the solution files to be found.
+    Its regexp must be set such that it has only one parameter ``t``.
 
     To create instances of the class, we follow Builder pattern so one is encouraged to use one of the derived
     classes of TimeIntegrationBuilder (or its own builder derived from TimeIntegrationBuilder) which should be passed
@@ -46,6 +92,13 @@ class TimeIntegration(ABC):
                                                            self.upload_data,
                                                            data_id)
         return data
+
+    @property
+    @classmethod
+    @abstractmethod
+    def solution_standardised_filename(cls):
+        raise NotImplementedError('Derived class must set the class member solution_standardised_filename as a class'
+                                  'derived from StandardisedNaming')
 
     @property
     def t(self) -> np.ndarray:
@@ -105,14 +158,14 @@ class TimeIntegration(ABC):
         for filename in filenames:
             params_dict = parse_by_named_regexp(regexp_pattern, filename)
             if params_dict is not None:
-                self._t.append(float(params_dict['num']))
+                self._t.append(float(params_dict['t']))
+        if not self._t:
+            raise ValueError('No solution found in path {}'.format(self._data_path))
         self.t.sort()
         self._t = np.array(self.t)
 
-    @abstractmethod
     def _get_regexp_for_solution_filenames(self) -> str:
-        raise NotImplementedError('Must be implemented. It must return the regular expression with "num" as a '
-                                  'parameter')
+        return self.solution_standardised_filename.regexp_with_substitutions()
 
     @abstractmethod
     def upload_solution(self, t_i: SupportsFloat) -> Mapping[SupportsFloat, Field]:
@@ -132,9 +185,9 @@ class TimeIntegration(ABC):
                                   'configuration')
 
 
-class TimeIntegrationInOldChannelFlow(TimeIntegration):
+class TimeIntegrationChannelFlowV1(TimeIntegration):
     """
-    Class TimeIntegrationInOldChannelFlow represent time-integration performed by the old channelflow, non-mpi version.
+    Class TimeIntegrationChannelFlowV1 represent time-integration performed by the old channelflow, openmp version.
 
     Its ``other data`` are
       - T (time)
@@ -153,15 +206,13 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
       - u_z (time-evolution of the xy-averaged L2-norm of the streamwise velocity)
       - v_z (time-evolution of the xy-averaged L2-norm of the wall-normal velocity)
     """
+    solution_standardised_filename = VelocityFieldFilenameV1
+
     def __init__(self, data_path) -> None:
         self._scalar_time_series_ids = ('T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'max_ke', 'LF', 'RF', 'UlamDotU',
                                         'L2Ulam', 'L2UlamPlusU', 'DUlamPlusU')
         self._xy_aver_time_series_ids = ('ke_z', 'u_z', 'v_z')
-        TimeIntegration.__init__(self, data_path)
-        pass
-
-    def _get_regexp_for_solution_filenames(self) -> str:
-        return '^u(?P<num>\d+[.]?\d*).h5$'
+        super().__init__(data_path)
 
     def upload_simulation_configuration(self) -> dict:
         _, attrs = self._read_field_and_attrs(0)
@@ -234,7 +285,91 @@ class TimeIntegrationInOldChannelFlow(TimeIntegration):
         return field_
 
     def _read_field_and_attrs(self, t_i: SupportsFloat):
-        field_name = 'u{:.3f}.h5'.format(self.t[t_i])
+        field_name = self.solution_standardised_filename.make_name(t=self.t[t_i])
+        field, attrs = read_field(os.path.join(self._data_path, field_name))
+        return field, attrs
+
+
+class TimeIntegrationChannelFlowV2(TimeIntegration):
+    """
+    Class TimeIntegrationChannelFlowV2 represent time-integration performed by the new channelflow, mpi version.
+
+    Its ``other data`` are
+      - T (time)
+      - L2U (time-evolution of the L2-norm of the flow field u, i.e., the fluctuation around the laminar solution)
+      - L2u, L2v, L2w (time-evolution of the L2-norms of the components of the flow field)
+      - D (time-evolution of dissipation: 1/(LxLyLz) int_V |curl u|^2 dV)
+      - e3d (time-evolution of the L2-norm of the flow field u computed for all kx!=0 modes)
+      - ecf (time-evolution of the twice energy of the cross-stream flow: L2v^2 + L2w^2)
+      - ubulk (bulk streamwise velocity, i.e., the mean (in space) streamwise velocity)
+      - wbulk (bulk spanwise velocity, i.e., the mean (in space) spanwise velocity)
+      - wallshear (|wallshear_a| + |wallshear_b|)
+      - wallshear_a (dU/dy at y = -1: 1/(2LxLz) * sqrt((du/dy_{y=-1})^2 + (dw/dy_{y=-1})^2))
+      - wallshear_b (dU/dy at y = 1: 1/(2LxLz) * sqrt((du/dy_{y=1})^2 + (dw/dy_{y=1})^2))
+      - ke_z (time-evolution of the xy-averaged kinetic energy)
+    """
+    solution_standardised_filename = VelocityFieldFilenameV2
+
+    def __init__(self, data_path) -> None:
+        self._scalar_time_series_ids = ('T', 'L2U', 'L2u', 'L2v', 'L2w', 'D', 'e3d', 'ecf', 'ubulk', 'wbulk',
+                                        'wallshear', 'wallshear_a', 'wallshear_b')
+        self._xy_aver_time_series_ids = ('ke_z',)
+        TimeIntegration.__init__(self, data_path)
+        pass
+
+    def upload_simulation_configuration(self) -> dict:
+        _, attrs = self._read_field_and_attrs(0)
+        return {'simulation_configuration': attrs}
+
+    def upload_solution(self, t_i: SupportsFloat) -> Mapping[SupportsFloat, Field]:
+        field, _ = self._read_field_and_attrs(t_i)
+        return {t_i: field}
+
+    def upload_data(self, data_id) -> dict:
+        if data_id in self._scalar_time_series_ids:
+            data = self._upload_scalar_time_series()
+        elif data_id in self._xy_aver_time_series_ids:
+            data_obj = self._upload_xy_aver_series(data_id)
+            data = {data_id: data_obj}
+        else:
+            raise KeyError('Unsupported data ID passed: {}'.format(data_id))
+        return data
+
+    def _upload_scalar_time_series(self):
+        param_names = ['T', 'L2U', 'L2u', 'L2v', 'L2w', 'e3d', 'ecf', 'ubulk', 'wbulk', 'wallshear', 'wallshear_a',
+                       'wallshear_b', 'D']
+        try:
+            scalar_time_series = parse_datafile(os.path.join(self._data_path, 'energy.asc'), param_names,
+                                                [float for _ in range(len(param_names))])
+        except Exception as e_:
+            logging.error('No supported version of summary file is found.')
+            raise e_
+        return scalar_time_series
+
+    def _upload_xy_aver_series(self, data_id) -> Field:
+        """
+        New version of channel flow permits for only xy-averaged ||u||_2.
+        :return: Field
+        """
+        if data_id == 'ke_z':
+            filename = os.path.join('xyavg_energy', 'out.nc')
+        else:
+            raise KeyError('Unsupported data ID passed: {}'.format(data_id))
+        f = netCDF4.Dataset(os.path.join(self._data_path, filename), 'r', format='NETCDF4')
+        t = np.array([float(os.path.splitext(filename)[0]) for filename in f.nco_input_file_list.split()])
+        ke = np.array(f['Component_0'][:, :, 0, 0])
+        ind = np.argsort(t) # find such indices that t is sorted
+        t = np.take_along_axis(t, ind, axis=0) # sort t
+        ke = np.take(ke, ind, axis=0) # sort ke along t-axis
+        z = np.array(f['Z'])
+        space = Space([t, z])
+        space.set_elements_names(['t', 'z'])
+        field_ = Field([ke], space)
+        field_.set_elements_names([data_id])
+        return field_
+
+    def _read_field_and_attrs(self, t_i: SupportsFloat):
+        field_name = self.solution_standardised_filename.make_name(t=self.t[t_i])
         field, attrs = read_field(os.path.join(self._data_path, field_name))
         return field, attrs
 
