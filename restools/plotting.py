@@ -149,7 +149,7 @@ def build_zooming_axes_for_plotting_with_box(fig, parent_ax, parent_box, child_b
         [parent_vertices_fig[parent_vertices[1]][1], child_vertices_fig[child_vertices[1]][1]], 'k', alpha=0.5, transform=fig.transFigure)
     return po_ax
 
-def put_fields_on_axes(f, ax_top=None, ax_bottom=None, enable_quiver=True, vertical=False):
+def put_fields_on_axes(f, ax_zx=None, ax_zy=None, enable_quiver=True, vertical=False):
     def _prepare_zx(field_):
         #y_averaged_field = average(field_, ['u', 'v', 'w'], 'y')
         y_averaged_field = at(field_, 'y', 0.0)
@@ -197,22 +197,27 @@ def put_fields_on_axes(f, ax_top=None, ax_bottom=None, enable_quiver=True, verti
     #cont_zy = ax_bottom.contourf(X_zy, Y_zy, zy_field.elements[0], cvals, vmin=vmin, vmax=vmax)
     arrow_scale_zx = 15. / np.sqrt(np.max(np.abs(zx_field.elements[0]))**2 + np.max(np.abs(zx_field.elements[1]))**2)
     arrow_scale_zy = 3. / np.sqrt(np.max(np.abs(zy_field.elements[0]))**2 + np.max(np.abs(zy_field.elements[1]))**2)
-    print(arrow_scale_zx)
-    print(arrow_scale_zy)
 
     conts = []
-    if ax_top is not None:
+    if ax_zx is not None:
         f_raw = zx_field.elements[0].T if vertical else zx_field.elements[0]
-        conts.append(_plot_contours_and_arrow(ax_top, X_zx, Y_zx, f_raw, X_zx_quiv, Y_zx_quiv, \
-                                              zx_field_quiv.elements[2], zx_field_quiv.elements[0], arrow_scale_zx, enable_quiver))
+        conts.append(_plot_contours_and_arrow(ax_zx, X_zx, Y_zx, f_raw, X_zx_quiv, Y_zx_quiv,
+                                              zx_field_quiv.elements[2], zx_field_quiv.elements[0], arrow_scale_zx,
+                                              enable_quiver))
 #        ax_top.set_xlim((0, f.space.z[-1]))
 #        ax_top.set_ylim((0, f.space.x[-1]))
-    if ax_bottom is not None:
+    if ax_zy is not None:
         f_raw = zy_field.elements[0].T if vertical else zy_field.elements[0]
-        conts.append(_plot_contours_and_arrow(ax_bottom, X_zy, Y_zy, zy_field.elements[0], X_zy_quiv, Y_zy_quiv, \
-                                              zy_field_quiv.elements[2], zy_field_quiv.elements[1], arrow_scale_zy, enable_quiver))
-        ax_bottom.set_ylim((-1, 1))
-        ax_bottom.set_yticks((-1, 0., 1))
+        conts.append(_plot_contours_and_arrow(ax_zy, X_zy, Y_zy, f_raw, X_zy_quiv, Y_zy_quiv,
+                                              zy_field_quiv.elements[2], zy_field_quiv.elements[1], arrow_scale_zy,
+                                              enable_quiver))
+        if vertical:
+            ax_zy.set_xlim((-1, 1))
+            ax_zy.set_xticks((-1, 0., 1))
+        else:
+            ax_zy.set_ylim((-1, 1))
+            ax_zy.set_yticks((-1, 0., 1))
+
     return conts
 
 def plot_filled_contours(ax, field_2d, cvals, **contourf_kwargs):
