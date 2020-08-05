@@ -352,7 +352,7 @@ class TimeIntegrationChannelFlowV2(TimeIntegration):
         :return: Field
         """
         if data_id == 'ke_z':
-            filename = os.path.join('xyavg_energy', 'out.nc')
+            filename = 'ke_z.nc'
         else:
             raise KeyError('Unsupported data ID passed: {}'.format(data_id))
         f = netCDF4.Dataset(os.path.join(self._data_path, filename), 'r', format='NETCDF4')
