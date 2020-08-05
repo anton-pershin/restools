@@ -10,8 +10,7 @@ import matplotlib.gridspec as gridspec
 
 from restools.timeintegration_builders import get_ti_builder
 from restools.flow_stats import Ensemble, BadEnsemble
-from restools.plotting import cell_heatmap
-from restools.plotting import label_axes
+from restools.plotting import label_axes, cell_heatmap, rasterise_and_save, reduce_eps_size
 from papers.jfm2020_nonlinear_robustness.data import Summary
 from comsdk.research import Research
 from comsdk.comaux import load_from_json
@@ -43,6 +42,7 @@ def _find_edgetracking_paths(path):
 
 
 if __name__ == '__main__':
+    plt.style.use('resources/default.mplstyle')
     summary = load_from_json(Summary)
     ti_builder = get_ti_builder(cache=False)
     res = Research.open(summary.edge_states_info.res_id)
@@ -53,8 +53,8 @@ if __name__ == '__main__':
 
     fig = plt.figure(figsize=(12, 6))
     gs = gridspec.GridSpec(nrows=1, ncols=3)
-    ax_edge_energy = fig.add_subplot(gs[0, :2])
-    ax_cells = fig.add_subplot(gs[0, 2])
+    ax_cells = fig.add_subplot(gs[0, 0])
+    ax_edge_energy = fig.add_subplot(gs[0, 1:])
 
     unctrl_task_path = res.get_task_path(summary.edge_states_info.task_for_uncontrolled_case)
     ens = Ensemble([ti_builder.get_timeintegration(os.path.join(unctrl_task_path, 'edge_trajectory_integrated'))],
@@ -129,11 +129,11 @@ if __name__ == '__main__':
                                          format=fmt))
     ax_cells.set_xlabel(r'$A$', fontsize=16)
     ax_cells.set_ylabel(r'$\omega$', fontsize=16)
-    label_axes(ax_edge_energy, label='(a)', loc=(0.5, 1.03), fontsize=16)
-    label_axes(ax_cells, label='(b)', loc=(0.5, 1.03), fontsize=16)
+    label_axes(ax_cells, label='(a)', loc=(0.5, 1.03), fontsize=16)
+    label_axes(ax_edge_energy, label='(b)', loc=(0.5, 1.03), fontsize=16)
     plt.tight_layout()
     plt.subplots_adjust(top=0.93)
-    plt.savefig('edge_energy.png')
+    plt.savefig('edge_energy.eps')
     plt.show()
 
     # Plot edge states
@@ -201,7 +201,8 @@ if __name__ == '__main__':
         label_axes(axes[0], label=es_info['label'], loc=(0.5, 1.05), fontsize=16)
         plt.tight_layout()
         plt.subplots_adjust(top=0.93)
-#        fname = 'edgetracking_C_A_02_omega_1_16.eps'
-#        rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
-#        reduce_eps_size(fname)
+        fname = 'edgetracking_{}_A_0{}_omega_1_{}.eps'.format(es_info['type'], int(es_info['a']*10),
+                                                              int(1./es_info['omega']))
+        rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
+        reduce_eps_size(fname)
         plt.show()

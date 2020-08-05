@@ -19,8 +19,7 @@ from comsdk.comaux import load_from_json
 
 
 if __name__ == '__main__':
-    matplotlib.rc('text', usetex=True)
-    matplotlib.rcParams['text.latex.preamble']=[r"\usepackage{amsmath}"]
+    plt.style.use('resources/default.mplstyle')
 
     summary = load_from_json(Summary)
     summary_prob_proto = load_from_json(SummaryProbProto)
@@ -77,10 +76,10 @@ if __name__ == '__main__':
         for ax, distr_summary in zip(ax_row, (p_lam_error_distr, e_a_error_distr, e_flex_error_distr)):
             plot_distribution_summary(ax, distr_summary, rp_numbers, obj_to_rasterize, means_line_style='x-')
             ax.grid()
-    for ax, label in zip(axes[0, :], ('(a) ' + r'$e_p$', '(b) ' + r'$e_a$', '(c) ' + r'$e_{flex}$')):
+    for ax, label in zip(axes[0, :], ('(a) ' + r'$e_S$', '(b) ' + r'$e_a$', '(c) ' + r'$e_{flex}$')):
         label_axes(ax, label=label, loc=(0.5, 1.06), fontsize=16)
     for ax in axes[1, :]:
-        ax.set_xlabel(r'$N$', fontsize=16)
+        ax.set_xlabel(r'$N$')
     plt.tight_layout()
     plt.subplots_adjust(top=0.92, hspace=0.25, wspace=0.2)
     fname = 'errors.eps'

@@ -17,9 +17,7 @@ from comsdk.comaux import load_from_json
 from comsdk.research import Research
 
 if __name__ == '__main__':
-    matplotlib.rc('text', usetex=True)
-    matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
-    matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsfonts}"]
+    plt.style.use('resources/default.mplstyle')
 
     summary = load_from_json(Summary)
     summary_prob_proto = load_from_json(SummaryProbProto)
@@ -43,7 +41,7 @@ if __name__ == '__main__':
     for ax, lam_score in zip(axes, (lam_score_no_ctrl, lam_score_exp_no_ctrl)):
         ax.plot(summary.p_lam_info.frequencies,
                 len(summary.p_lam_info.frequencies)*[lam_score * lam_diss_no_ctrl + (1. - lam_score) * turb_diss_no_ctrl],
-                'k-', linewidth=2, label=r'$A = 0$')
+                'k-', label=r'$W_{osc} = 0$')
     for a_i, amplitude in enumerate(summary.p_lam_info.amplitudes):
         for omega_i, frequency in enumerate(summary.p_lam_info.frequencies):
             if a_i < len(summary.simulations_with_full_fields_saved.amplitudes):
@@ -65,23 +63,24 @@ if __name__ == '__main__':
         lam_diss = np.array([re * PlaneCouetteFlowWithInPhaseSpanwiseOscillations(
           re=re, a=amplitude, omega=frequency).dissipation_rate for omega in summary.p_lam_info.frequencies])
         axes[0].plot(summary.p_lam_info.frequencies, lam_scores[a_i] * lam_diss + (1. - lam_scores[a_i]) * turb_diss[a_i],
-                     'o-', linewidth=2, label=r'$A = ' + str(amplitude) + r'$')
+                     'o-', label=r'$W_{osc} = ' + str(amplitude) + r'$')
         axes[1].plot(summary.p_lam_info.frequencies,
                      lam_scores_exp[a_i] * lam_diss + (1. - lam_scores_exp[a_i]) * turb_diss[a_i],
-                     'o-', linewidth=2, label=r'$A = ' + str(amplitude) + r'$')
+                     'o-', label=r'$W_{osc} = ' + str(amplitude) + r'$')
     for ax, ylabel, title in zip(axes, (r'$S$', r'$E_a$', r'$E_{flex}$'), (r'(a)', r'(b)')):
         ax.grid()
-        ax.set_xlabel(r'$\omega$', fontsize=16)
+        ax.set_xlabel(r'$\omega$')
         ax.set_xscale('log', basex=2)
         ax.set_xticks(summary.p_lam_info.frequencies)
         ax.set_xticklabels([r'$2^{' + str(int(np.log2(summary.p_lam_info.frequencies[i]))) + r'}$'
                             for i in range(len(summary.p_lam_info.frequencies))])
         label_axes(ax, label=title, loc=(0.47, 1.05), fontsize=16)
-    axes[0].set_ylabel(r'$Re \times \mathbb{E} [\epsilon | A, \omega]$', fontsize=16)
-    axes[1].legend(bbox_to_anchor=(0.72, 0.0, 0.9, 1.02), loc='upper center',
-                   ncol=1, fancybox=True, fontsize=12)
+    #axes[0].set_ylabel(r'$Re \times \mathbb{E} [\epsilon | W_{osc}, \omega]$')
+    axes[0].set_ylabel(r'$Re \times \bar{\epsilon}$')
+    axes[1].legend(bbox_to_anchor=(0.75, 0.0, 0.9, 1.02), loc='upper center',
+                   ncol=1, fancybox=True)
     plt.tight_layout()
-    plt.subplots_adjust(top=0.9, right=0.88, wspace=0.14)
+    plt.subplots_adjust(top=0.9, right=0.86, wspace=0.08)
     fname = 'expected_diss_rate.eps'
     plt.savefig(fname)
 #    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
