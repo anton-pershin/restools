@@ -21,8 +21,7 @@ from comsdk.research import Research
 
 
 if __name__ == '__main__':
-    matplotlib.rc('text', usetex=True)
-    matplotlib.rcParams['text.latex.preamble']=[r"\usepackage{amsmath}"]
+    plt.style.use('resources/default.mplstyle')
 
     summary = load_from_json(Summary)
     summary_prob_proto = load_from_json(SummaryProbProto)
@@ -100,7 +99,7 @@ if __name__ == '__main__':
                    upper_deciles=p_lam_upper_decile, obj_to_rasterize=obj_to_rasterize)
         for data, color in zip((p_lam_lower_decile, p_lam_upper_decile), ('red', 'red')):
             data_fitting = LaminarisationProbabilityFittingFunction2020JFM.from_data(energies, data)
-            ax_sample.plot(energies_for_plotting, data_fitting(energies_for_plotting), linewidth=2, color=color)
+            ax_sample.plot(energies_for_plotting, data_fitting(energies_for_plotting), color=color)
         print('\tConstructing confidence bands for a single sample based on Bayesian estimation')
         p_lam_samples = np.array([d.rvs(size=summary.default_sample_number) for d in p_lam_distrs])
         fitting_values = np.zeros((summary.default_sample_number, len(energies_for_plotting)))
@@ -122,9 +121,9 @@ if __name__ == '__main__':
         ax_sample.grid()
         label_axes(ax_sample, label=label, loc=(0.5, 1.05), fontsize=16)
     for ax in axes[:, 0]:
-        ax.set_ylabel(r'$P_{lam}$', fontsize=16)
+        ax.set_ylabel(r'$P_{lam}$')
     for ax in axes[1, :]:
-        ax.set_xlabel(r'$E$', fontsize=16)
+        ax.set_xlabel(r'$E$')
     plt.tight_layout()
     plt.subplots_adjust(top=0.95, hspace=0.2)
     fname = 'p_lam_subsampling.eps'

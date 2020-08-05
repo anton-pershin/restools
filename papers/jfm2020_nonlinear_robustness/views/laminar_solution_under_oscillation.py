@@ -9,6 +9,8 @@ from restools.laminar_flows import PlaneCouetteFlowWithInPhaseSpanwiseOscillatio
 
 
 if __name__ == '__main__':
+    plt.style.use('resources/default.mplstyle')
+
     A = 0.3
     omega = 1. / 64
     re = 500.
@@ -22,7 +24,7 @@ if __name__ == '__main__':
     stokes_bl = StokesBoundaryLayer(re, A, omega, t, y_stokes + 1.)
     fig, axes = plt.subplots(1, 8, figsize=(12, 3.5))
     for i, ax in enumerate(axes):
-        ax.plot(pcf_wall_osc.solution.w[i, :], y, linewidth=2)
+        ax.plot(pcf_wall_osc.solution.w[i, :], y)
         ax.plot(stokes_bl.solution.w[i, :], y_stokes, '--', linewidth=1)
         ax.plot(stokes_bl.solution.w[i, :], y_stokes[::-1] + 1., '--', linewidth=1, color='k')
         ax.grid()
@@ -31,7 +33,7 @@ if __name__ == '__main__':
         ax.set_xticks([-A, 0., A])
         if i == 0:
             ttl = ax.set_title(r'$t = 0$')
-            ax.set_ylabel(r'$y$', fontsize=14)
+            ax.set_ylabel(r'$y$')
         else:
             ax.set_yticklabels([])
             ttl = ax.set_title(r'$t = \dfrac{' + str(i) + r'}{8T}$')

@@ -68,9 +68,7 @@ def _load_from_dump(summary, a_i, freq_j, s_distr_summary, s_exp_distr_summary, 
 
 
 if __name__ == '__main__':
-    matplotlib.rc('text', usetex=True)
-    matplotlib.rcParams['text.latex.preamble'] = [r"\usepackage{amsmath}"]
-
+    plt.style.use('resources/default.mplstyle')
     parser = argparse.ArgumentParser(description='Plots laminarisation probability obtained by Bayesian estimation.')
     parser.add_argument('mode', metavar='MODE', nargs='?', choices=['loadfromdump', 'dump'], default='loadfromdump',
                         help='decides where the data should be taken from and whether the data is dumped '
@@ -105,7 +103,7 @@ if __name__ == '__main__':
     for ax, q in zip((ax_s, ax_s_exp, ax_e_a, ax_e_flex),
                      (lam_score_no_ctrl, lam_score_exp_no_ctrl, e_a_no_ctrl, e_flex_no_ctrl)):
         ax.plot(summary.p_lam_info.frequencies, len(summary.p_lam_info.frequencies)*[q],
-                'k-', linewidth=2, label=r'$A = 0$')
+                'k-', label=r'$W_{osc} = 0$')
 
     # PLOT ONE RANDOM SAMPLE AND RESULTING CONFIDENCE BAND
 
@@ -129,9 +127,9 @@ if __name__ == '__main__':
             means = np.array(d_summary.means)
             lower_deciles = np.array(d_summary.lower_deciles)
             upper_deciles = np.array(d_summary.upper_deciles)
-            ax.errorbar(summary.p_lam_info.frequencies, means, fmt='o-', linewidth=2,
+            ax.errorbar(summary.p_lam_info.frequencies, means, fmt='o-',
                         yerr=np.transpose(np.c_[means - lower_deciles, upper_deciles - means]), capsize=3,
-                        label=r'$A = ' + str(amplitude) + r'$')
+                        label=r'$W_{osc} = ' + str(amplitude) + r'$')
 
         if args.mode == 'dump':
             for d_summary, storage in zip((s_distr_summary, s_exp_distr_summary,
@@ -146,8 +144,8 @@ if __name__ == '__main__':
     for ax, ylabel, title in zip((ax_s, ax_s_exp, ax_e_a, ax_e_flex), (r'$S$', r'$S$', r'$E_a$', r'$E_{flex}$'),
                                  (r'(a)', r'(b)', r'(c)', r'(d)')):
         ax.grid()
-        ax.set_xlabel(r'$\omega$', fontsize=16)
-        ax.set_ylabel(ylabel, fontsize=16)
+        ax.set_xlabel(r'$\omega$')
+        ax.set_ylabel(ylabel)
         ax.set_xscale('log', basex=2)
         ax.set_xticks(summary.p_lam_info.frequencies)
         ax.set_xticklabels([r'$2^{' + str(int(np.log2(summary.p_lam_info.frequencies[i]))) + r'}$'
@@ -157,10 +155,10 @@ if __name__ == '__main__':
         ax.set_ylim((0., 1.))
 #    ax_s_exp.legend(bbox_to_anchor=(0.1, 1.05, 0.8, 0.1), loc='upper center',
 #                    ncol=5, fancybox=True, fontsize=12)
-    ax_s_exp.legend(bbox_to_anchor=(0.72, 0.0, 0.9, 1.02), loc='upper center',
-                    ncol=1, fancybox=True, fontsize=12)
+    ax_s_exp.legend(bbox_to_anchor=(0.75, 0.0, 0.9, 1.02), loc='upper center',
+                    ncol=1, fancybox=True)
     plt.tight_layout()
-    plt.subplots_adjust(top=0.95, right=0.88, wspace=0.18)
+    plt.subplots_adjust(top=0.95, right=0.86, wspace=0.26)
     fname = 'estimation.eps'
     plt.savefig(fname)
 #    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
