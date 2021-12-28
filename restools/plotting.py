@@ -118,7 +118,7 @@ def build_zooming_axes_for_plotting_with_box(fig, parent_ax, parent_box, child_b
             data_to_figure.transform((child_box[0] + child_box[2], child_box[1] + child_box[3])),
             data_to_figure.transform((child_box[0] + child_box[2], child_box[1])),
         )
-    po_ax = plt.axes((child_box_fig[0][0], child_box_fig[0][1], child_box_fig[3][0] - child_box_fig[0][0], child_box_fig[1][1] - child_box_fig[0][1])) 
+    po_ax = plt.axes((child_box_fig[0][0], child_box_fig[0][1], child_box_fig[3][0] - child_box_fig[0][0], child_box_fig[1][1] - child_box_fig[0][1]))
     if remove_axis:
         po_ax.get_xaxis().set_visible(False)
         po_ax.get_yaxis().set_visible(False)
@@ -139,14 +139,20 @@ def build_zooming_axes_for_plotting_with_box(fig, parent_ax, parent_box, child_b
             (po_ax_bbox.x1, po_ax_bbox.y1),
             (po_ax_bbox.x1, po_ax_bbox.y0),
         )
-    parent_ax.plot([parent_box[0], parent_box[0] + parent_box[2]], [parent_box[1], parent_box[1]], 'k', alpha=0.5)
-    parent_ax.plot([parent_box[0], parent_box[0] + parent_box[2]], [parent_box[1] + parent_box[3], parent_box[1] + parent_box[3]], 'k', alpha=0.5)
-    parent_ax.plot([parent_box[0], parent_box[0]], [parent_box[1], parent_box[1] + parent_box[3]], 'k', alpha=0.5)
-    parent_ax.plot([parent_box[0] + parent_box[2], parent_box[0] + parent_box[2]], [parent_box[1], parent_box[1] + parent_box[3]], 'k', alpha=0.5)
-    parent_ax.plot([parent_vertices_fig[parent_vertices[0]][0], child_vertices_fig[child_vertices[0]][0]], \
-        [parent_vertices_fig[parent_vertices[0]][1], child_vertices_fig[child_vertices[0]][1]], 'k', alpha=0.5, transform=fig.transFigure)
-    parent_ax.plot([parent_vertices_fig[parent_vertices[1]][0], child_vertices_fig[child_vertices[1]][0]], \
-        [parent_vertices_fig[parent_vertices[1]][1], child_vertices_fig[child_vertices[1]][1]], 'k', alpha=0.5, transform=fig.transFigure)
+    parent_ax.plot([parent_box[0], parent_box[0] + parent_box[2]], [parent_box[1], parent_box[1]], 'k',
+                   linewidth=1, alpha=0.5)
+    parent_ax.plot([parent_box[0], parent_box[0] + parent_box[2]], [parent_box[1] + parent_box[3], parent_box[1] + parent_box[3]], 'k',
+                   linewidth=1, alpha=0.5)
+    parent_ax.plot([parent_box[0], parent_box[0]], [parent_box[1], parent_box[1] + parent_box[3]], 'k',
+                   linewidth=1, alpha=0.5)
+    parent_ax.plot([parent_box[0] + parent_box[2], parent_box[0] + parent_box[2]], [parent_box[1], parent_box[1] + parent_box[3]], 'k',
+                   linewidth=1, alpha=0.5)
+    parent_ax.plot([parent_vertices_fig[parent_vertices[0]][0], child_vertices_fig[child_vertices[0]][0]],
+        [parent_vertices_fig[parent_vertices[0]][1], child_vertices_fig[child_vertices[0]][1]], 'k',
+                   alpha=0.5, linewidth=1, transform=fig.transFigure)
+    parent_ax.plot([parent_vertices_fig[parent_vertices[1]][0], child_vertices_fig[child_vertices[1]][0]],
+        [parent_vertices_fig[parent_vertices[1]][1], child_vertices_fig[child_vertices[1]][1]], 'k',
+                   alpha=0.5, linewidth=1, transform=fig.transFigure)
     return po_ax
 
 def put_fields_on_axes(f, ax_zx=None, ax_zy=None, enable_quiver=True, vertical=False):

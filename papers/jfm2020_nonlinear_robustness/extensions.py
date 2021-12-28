@@ -65,6 +65,7 @@ def turbulent_dissipation_rate(task, a, omega, res, ti_builder):
     try:
         ens = Ensemble(tis, max_ke_eps=0.02)
         diss_distr = ens.dissipation_distribution()
+        print(f'Total number of selected data samples is {len(diss_distr.data_samples)} (about {len(diss_distr.data_samples)/2} time units)')
     except BadEnsemble as e:
         print('Configuration "A = {}, omega = {} (task {})" is skipped because turbulent trajectories are '
               'too short'.format(a, omega, task))

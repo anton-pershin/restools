@@ -1,5 +1,22 @@
 {
     "default_sample_number": 1000,
+    "minimal_seed_info": {
+        "re": 500.0,
+        "amplitudes": [
+            0.2,
+            0.4
+        ],
+        "frequencies": [
+            0.03125,
+            0.125,
+            0.5
+        ],
+        "kinetic_energies": [
+            [0.00001265, 0.0000112, 0.00000745],
+            [0.0000261, 0.000019225, 0.000007875]
+        ],
+        "kinetic_energy_for_uncontrolled_case": 0.000007275
+    },
     "edge_states_info": {
         "amplitudes": [
             0.05,

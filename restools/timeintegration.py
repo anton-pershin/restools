@@ -2,8 +2,11 @@ from abc import ABC, abstractmethod
 from typing import SupportsFloat, Mapping, Any, Type
 from typing_extensions import Literal
 import logging
+import pickle
+import json
 
 from restools.function import Function
+from restools.data_access_strategies import free_data_after_access_strategy
 from thequickmath.field import *
 from comsdk.comaux import parse_datafile, parse_timed_numdatafile, parse_by_named_regexp, StandardisedNaming, \
     take_value_if_not_none, raise_exception_if_arguments_not_in_keywords_or_none
@@ -79,12 +82,10 @@ class TimeIntegration(ABC):
     (non-MPI) version of channelflow.
     """
 
-    def __init__(self, data_path) -> None:
-        self.other_data_access_strategy = None
-        self.solution_access_strategy = None
+    def __init__(self, data_path, other_data_access_strategy=None) -> None:
+        self.other_data_access_strategy = other_data_access_strategy
         self._t = None
         self._data_path = data_path
-        self._solution_time_series = {}
         self._other_data = {}
 
     def __getattr__(self, data_id):
@@ -92,13 +93,6 @@ class TimeIntegration(ABC):
                                                            self.upload_data,
                                                            data_id)
         return data
-
-    @property
-    @classmethod
-    @abstractmethod
-    def solution_standardised_filename(cls):
-        raise NotImplementedError('Derived class must set the class member solution_standardised_filename as a class'
-                                  'derived from StandardisedNaming')
 
     @property
     def t(self) -> np.ndarray:
@@ -127,6 +121,110 @@ class TimeIntegration(ABC):
         sim_conf = self.other_data_access_strategy.access_data(self._other_data, 'simulation_configuration',
                                                                self.upload_simulation_configuration)
         return sim_conf
+
+    @abstractmethod
+    def _load_time_domain(self) -> None:
+        raise NotImplementedError('Must be implemented. It must load the distere time points '
+                                  'to the numpy array self._t')
+
+    @abstractmethod
+    def upload_data(self, data_id) -> dict:
+        raise NotImplementedError('Must be implemented. It must return the dictionary containing all the data '
+                                  'physically linked with the data identified by data_id (e.g., it may be all time '
+                                  'series from the same file). The dictionary, apparently, must also contain the data '
+                                  'identified by data_id ')
+
+    @abstractmethod
+    def upload_simulation_configuration(self) -> Mapping[Literal['simulation_configuration'],  dict]:
+        raise NotImplementedError('Must be implemented. It must return the dictionary containing simulation '
+                                  'configuration')
+
+
+class TimeIntegrationLowDimensional(TimeIntegration):
+    """
+    Class TimeIntegrationLowDimensional regards a particular case of low-dimensional simulations where there is no
+    need to use separate files for the solutions at different time steps.
+    The whole time series is stored in a single standardised pickled file which must contain a dictionary with the
+    following structure:
+    'time' -> np.ndarray with shape (NumberOfTimeSteps,)
+    'timeseries' -> np.ndarray with shape (NumberOfTimeSteps, NumberOfDegreesOfFreedom)
+    The time series is accessed through 'Other data', i.e. via attribute 'timeseries'.
+
+    To create instances of the class, we follow Builder pattern so one is encouraged to use one of the derived
+    classes of TimeIntegrationBuilder (or its own builder derived from TimeIntegrationBuilder) which should be passed
+    to TimeIntegrationBuildDirector. In addition, there are few functions encapsulating this process. It allows for the
+    safe and complete creation of TimeIntegration instance.
+    """
+
+    def __init__(self, data_path, index) -> None:
+        self.inputs_data_path = data_path
+        super().__init__(os.path.join(data_path, str(index)),
+                         other_data_access_strategy=free_data_after_access_strategy)
+
+    def _load_time_domain(self) -> None:
+        data = self._load_main_data_file()
+        self._t = data['time']
+
+    def upload_data(self, data_id) -> dict:
+        if data_id == 'timeseries':
+            data = self._load_main_data_file()
+            data_obj = data[data_id]
+        else:
+            raise KeyError('Unsupported data ID passed: {}'.format(data_id))
+        return {data_id: data_obj}
+
+    def upload_simulation_configuration(self) -> dict:
+        with open(os.path.join(self.inputs_data_path, 'inputs.json'), 'r') as f:
+            inputs = json.load(f)
+        return {'simulation_configuration': inputs}
+
+    def _load_main_data_file(self):
+        with open(self._data_path, 'rb') as f:
+            data_ = pickle.load(f)
+        return data_
+
+
+class TimeIntegration3D(TimeIntegration):
+    """
+    Class TimeIntegration is a general representation of the data produced by time-integration. The current
+    implementation regards a particular case of 3D fluid simulations. This class wraps up the real data (e.g., *.h5,
+    *.nc and *.txt files) and splits into two main data representations: (1) solution (3D) time series, (2) other data
+    (possibly, time series) and (3) simulations configuration. The former is a list of full flow
+    fields saved at separate instants of time which can be assessed via method
+    solution(t). Other data are attributes of the class instance, differentiated by their so-called Data ID, and
+    depend on a particular derived class (see docs of the corresponding class). Simulations configuration can be
+    accessed via property simulation_configuration. All the data is accessed according to the lazy initialisation
+    pattern (i.e., files are loaded only when they are needed). At the same time, whether the data is cached/stored when
+    it has been loaded depends on DataAccessStrategy defined for solution fields (solution_access_strategy) and other
+    data (other_data_access_strategy). Since Data ID is passed to main strategy methods, one is encouraged to derive
+    their own classes implementing different 'caching' strategy based on different Data IDs. Any other data can be
+    transformed right after they are loaded through the function transform ('upload' and 'transform' functions are
+    essentially glued).
+
+    Also solution_standardised_filename as instance of StandardisedNaming must be set to the solution files to be found.
+    Its regexp must be set such that it has only one parameter ``t``.
+
+    To create instances of the class, we follow Builder pattern so one is encouraged to use one of the derived
+    classes of TimeIntegrationBuilder (or its own builder derived from TimeIntegrationBuilder) which should be passed
+    to TimeIntegrationBuildDirector. In addition, there are few functions encapsulating this process. It allows for the
+    safe and complete creation of TimeIntegration instance.
+
+    One should also note that TimeIntegration is a base class so one has to use one of its derived classes.
+    For example, this package contains class TimeIntegrationInOldChannelFlow adapted for the data produced by old
+    (non-MPI) version of channelflow.
+    """
+
+    def __init__(self, data_path) -> None:
+        self.solution_access_strategy = None
+        self._solution_time_series = {}
+        super().__init__(data_path)
+
+    @property
+    @classmethod
+    @abstractmethod
+    def solution_standardised_filename(cls):
+        raise NotImplementedError('Derived class must set the class member solution_standardised_filename as a class'
+                                  'derived from StandardisedNaming')
 
     def solution(self, t) -> Field:
         """
@@ -167,25 +265,8 @@ class TimeIntegration(ABC):
     def _get_regexp_for_solution_filenames(self) -> str:
         return self.solution_standardised_filename.regexp_with_substitutions()
 
-    @abstractmethod
-    def upload_solution(self, t_i: SupportsFloat) -> Mapping[SupportsFloat, Field]:
-        raise NotImplementedError('Must be implemented. It must return the solution as Field instance based on t_i'
-                                  ' as an index in a time series')
 
-    @abstractmethod
-    def upload_data(self, data_id) -> dict:
-        raise NotImplementedError('Must be implemented. It must return the dictionary containing all the data '
-                                  'physically linked with the data identified by data_id (e.g., it may be all time '
-                                  'series from the same file). The dictionary, apparently, must also contain the data '
-                                  'identified by data_id ')
-
-    @abstractmethod
-    def upload_simulation_configuration(self) -> Mapping[Literal['simulation_configuration'],  dict]:
-        raise NotImplementedError('Must be implemented. It must return the dictionary containing simulation '
-                                  'configuration')
-
-
-class TimeIntegrationChannelFlowV1(TimeIntegration):
+class TimeIntegrationChannelFlowV1(TimeIntegration3D):
     """
     Class TimeIntegrationChannelFlowV1 represent time-integration performed by the old channelflow, openmp version.
 
@@ -290,7 +371,7 @@ class TimeIntegrationChannelFlowV1(TimeIntegration):
         return field, attrs
 
 
-class TimeIntegrationChannelFlowV2(TimeIntegration):
+class TimeIntegrationChannelFlowV2(TimeIntegration3D):
     """
     Class TimeIntegrationChannelFlowV2 represent time-integration performed by the new channelflow, mpi version.
 

@@ -30,7 +30,7 @@ if __name__ == '__main__':
     turb_diss = np.zeros((len(summary.p_lam_info.amplitudes), len(summary.p_lam_info.frequencies)))
     lam_scores = np.zeros((len(summary.p_lam_info.amplitudes), len(summary.p_lam_info.frequencies)))
     lam_scores_exp = np.zeros((len(summary.p_lam_info.amplitudes), len(summary.p_lam_info.frequencies)))
-    max_turb_diss_rate = 1000.
+    min_turb_diss_rate = 1000.
     fitting_no_ctrl = LaminarisationProbabilityFittingFunction2020JFM.from_data(
         0.5 * np.array([0.] + summary_prob_proto.energy_levels), np.array([1.] + summary_prob_proto.confs[1].p_lam))
     lam_score_no_ctrl = fitting_no_ctrl.expected_probability()
@@ -51,15 +51,15 @@ if __name__ == '__main__':
                 turb_diss_ = 0.
             if turb_diss_ is None:
                 turb_diss_ = 0.
-            if turb_diss_ != 0. and turb_diss_ < max_turb_diss_rate:
-                max_turb_diss_rate = turb_diss_
+            if turb_diss_ != 0. and turb_diss_ < min_turb_diss_rate:
+                min_turb_diss_rate = turb_diss_
             turb_diss[a_i][omega_i] = turb_diss_
             lam_scores[a_i][omega_i] = summary.p_lam_info.s[a_i][omega_i][1]
             lam_scores_exp[a_i][omega_i] = summary.p_lam_info.s_exp[a_i][omega_i][1]
     for a_i, amplitude in enumerate(summary.p_lam_info.amplitudes):
         for omega_i, frequency in enumerate(summary.p_lam_info.frequencies):
             if turb_diss[a_i][omega_i] == 0.:
-                turb_diss[a_i][omega_i] = max_turb_diss_rate
+                turb_diss[a_i][omega_i] = min_turb_diss_rate
         lam_diss = np.array([re * PlaneCouetteFlowWithInPhaseSpanwiseOscillations(
           re=re, a=amplitude, omega=frequency).dissipation_rate for omega in summary.p_lam_info.frequencies])
         axes[0].plot(summary.p_lam_info.frequencies, lam_scores[a_i] * lam_diss + (1. - lam_scores[a_i]) * turb_diss[a_i],

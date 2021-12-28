@@ -12,7 +12,7 @@ from scipy.integrate import simps
 
 from restools.relaminarisation import is_relaminarised
 from restools.timeintegration import TimeIntegration, Perturbation
-from restools.timeintegration_builders import TimeIntegrationBuilder
+from restools.timeintegration_builders import TimeIntegration3DBuilder
 import comsdk.comaux as comaux
 from comsdk.research import Research
 from thequickmath.aux import index_for_almost_exact_coincidence_unsorted
@@ -38,7 +38,7 @@ class LaminarisationStudy:
     """
     def __init__(self, paths,
                  data_dir_naming: Type[comaux.StandardisedNaming],
-                 ti_builder: TimeIntegrationBuilder,
+                 ti_builder: TimeIntegration3DBuilder,
                  debug=False):
         """
 
@@ -61,7 +61,7 @@ class LaminarisationStudy:
     @classmethod
     def from_paths(cls, paths, rp_naming: Type[comaux.StandardisedNaming],
                    data_dir_naming: Type[comaux.StandardisedNaming],
-                   ti_builder: TimeIntegrationBuilder,
+                   ti_builder: TimeIntegration3DBuilder,
                    energy_rtol=1e-05,
                    energy_atol=1e-08,
                    debug=False):
@@ -72,7 +72,7 @@ class LaminarisationStudy:
     @classmethod
     def from_tasks(cls, res: Research, tasks: Sequence[int], rp_naming: Type[comaux.StandardisedNaming],
                    data_dir_naming: Type[comaux.StandardisedNaming],
-                   ti_builder: TimeIntegrationBuilder,
+                   ti_builder: TimeIntegration3DBuilder,
                    energy_rtol=1e-05,
                    energy_atol=1e-08,
                    debug=False):

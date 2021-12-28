@@ -25,8 +25,9 @@ def _plot_average_turbulent_profile(ax, task, task_path, label=None, color=None)
         av_turb_field = ens.time_averaged_solution()
     except BadEnsemble as e:
         raise Exception('Data is wrong: turbulent trajectories are too short for task {}'.format(task))
+    av_lam_u = av_turb_field.space.y
     av_turb_u = average(average(av_turb_field, ['u'], 'x'), ['u'], 'z').u
-    dUdy = fd(av_turb_field.space.y, av_turb_u)
+    dUdy = fd(av_turb_field.space.y, av_lam_u + av_turb_u)
     ax.plot(dUdy, av_turb_field.space.y, label=label, color=color)
 
 
@@ -54,6 +55,7 @@ if __name__ == '__main__':
     for a_i, a in enumerate(summary.simulations_with_full_fields_saved.amplitudes):
         turb_diss_means = []
         for omega_i, omega in enumerate(summary.simulations_with_full_fields_saved.frequencies):
+            print(f'Processing amplitude A = {a}, frequency omega = {omega}')
             task = summary.simulations_with_full_fields_saved.tasks[a_i][omega_i]
             turb_diss_means.append(turbulent_dissipation_rate(task, a, omega, res, ti_builder))
         lam_diss_rate_means = [re * PlaneCouetteFlowWithInPhaseSpanwiseOscillations(

@@ -6,7 +6,7 @@ from restools.timeintegration import TimeIntegrationChannelFlowV1, TimeIntegrati
 from restools.data_access_strategies import free_data_after_access_strategy, hold_data_in_memory_after_access_strategy
 
 
-class TimeIntegrationBuilder:
+class TimeIntegration3DBuilder:
     """
     Class TimeIntegrationBuilder is a base builder class for TimeIntegration objects (see Builder pattern for details).
     Since TimeIntegration is a base class itself and cannot thus be created, one should pass a concrete TimeIntegration
@@ -35,13 +35,13 @@ class TimeIntegrationBuilder:
         raise NotImplementedError('Must be implemented')
 
 
-class NoBackupAccessBuilder(TimeIntegrationBuilder):
+class NoBackupAccess3DBuilder(TimeIntegration3DBuilder):
     """
     Class NoBackupAccessBuilder implements TimeIntegrationBuilder with such DataAccessStrategy for solution fields and
     other data that they never stored in TimeIntegration.
     """
     def __init__(self, ti_class):
-        TimeIntegrationBuilder.__init__(self, ti_class)
+        TimeIntegration3DBuilder.__init__(self, ti_class)
 
     def create_other_data_access_strategy(self) -> None:
         self._other_data_access_strategy = free_data_after_access_strategy
@@ -50,13 +50,13 @@ class NoBackupAccessBuilder(TimeIntegrationBuilder):
         self._solution_access_strategy = free_data_after_access_strategy
 
 
-class CacheAllAccessBuilder(TimeIntegrationBuilder):
+class CacheAllAccess3DBuilder(TimeIntegration3DBuilder):
     """
     Class CacheAllAccessBuilder implements TimeIntegrationBuilder with such DataAccessStrategy for solution fields and
     other data that they immediately cached in TimeIntegration once they are accessed.
     """
     def __init__(self, ti_class):
-        TimeIntegrationBuilder.__init__(self, ti_class)
+        TimeIntegration3DBuilder.__init__(self, ti_class)
 
     def create_other_data_access_strategy(self) -> None:
         self._other_data_access_strategy = hold_data_in_memory_after_access_strategy
@@ -65,7 +65,7 @@ class CacheAllAccessBuilder(TimeIntegrationBuilder):
         self._solution_access_strategy = hold_data_in_memory_after_access_strategy
 
 
-class TimeIntegrationBuildDirector:
+class TimeIntegration3DBuildDirector:
     """
     Class TimeIntegrationBuildDirector is a director in Builder pattern and is used for builder construction.
     A common use is that one create a builder, then create a director passing the builder to the constructor of the
@@ -81,7 +81,7 @@ class TimeIntegrationBuildDirector:
 
 
 def get_ti_builder(cf_version: Literal['cfv1', 'cfv2'] = 'cfv1',
-                   cache=False, upload_data_extension=None) -> TimeIntegrationBuilder:
+                   cache=False, upload_data_extension=None) -> TimeIntegration3DBuilder:
     """
     Returns TimeIntegrationBuilder associated with a particular version of channelflow (cf_version), selected
     xy-averaged quantities, uploaded to vector_series, and able to either store or immediately free all the uploaded
@@ -113,10 +113,10 @@ def get_ti_builder(cf_version: Literal['cfv1', 'cfv2'] = 'cfv1',
         ti_class.upload_data = _overridden_upload_data
     builder = None
     if cache:
-        builder = CacheAllAccessBuilder(ti_class)
+        builder = CacheAllAccess3DBuilder(ti_class)
     else:
-        builder = NoBackupAccessBuilder(ti_class)
-    director = TimeIntegrationBuildDirector(builder)
+        builder = NoBackupAccess3DBuilder(ti_class)
+    director = TimeIntegration3DBuildDirector(builder)
     director.construct()
     return builder
 

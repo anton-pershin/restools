@@ -9,7 +9,7 @@ import numpy as np
 
 from restools.standardised_programs import StandardisedIntegrator, StandardisedProgramEdge, RandomfieldChannelflowV1, \
     AddfieldsChannelflowV1
-from restools.timeintegration_builders import CacheAllAccessBuilder
+from restools.timeintegration_builders import CacheAllAccess3DBuilder
 from restools.relaminarisation import is_relaminarised
 from restools.helpers import unlist_if_necessary
 from comsdk.research import CreateTaskGraph, CreateTaskEdge
@@ -305,7 +305,7 @@ class ContinuingIntegrationGraph(Graph):
 
             if not os.path.exists(data_path):
                 return False
-            ti = CacheAllAccessBuilder(integrator_prog_type.ti_class).get_timeintegration(data_path)
+            ti = CacheAllAccess3DBuilder(integrator_prog_type.ti_class).get_timeintegration(data_path)
             if ti.T[-1] >= d['T1']:
                 return True
             return is_relaminarised(ti.max_ke)

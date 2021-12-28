@@ -137,7 +137,8 @@ def relative_probability_increase(fitting_noctrl: Callable[[np.ndarray], np.ndar
 
 
 def plot_p_lam_from_conf(ax, summary: Summary, conf: SingleConfiguration, separate_bars_for_neg_and_pos_B=True,
-                         color='blue', bar_width=0.0004, zorder=0, lower_deciles=None, upper_deciles=None, obj_to_rasterize=None):
+                         color='blue', bar_width=0.0004, zorder=0, lower_deciles=None, upper_deciles=None, obj_to_rasterize=None,
+                         bar_alpha=0.75):
     p_lam_neg_B = np.zeros_like(summary.energy_levels)
     p_lam_pos_B = np.zeros_like(summary.energy_levels)
     p_lam = np.zeros_like(summary.energy_levels)
@@ -160,25 +161,25 @@ def plot_p_lam_from_conf(ax, summary: Summary, conf: SingleConfiguration, separa
     p_lam_neg_B = np.r_[[1.], p_lam_neg_B]
     p_lam_pos_B = np.r_[[1.], p_lam_pos_B]
     if separate_bars_for_neg_and_pos_B:
-        obj = ax.bar(adjusted_energy_levels, p_lam_neg_B / 2., 2*bar_width, alpha=0.75, color='magenta', label=r'$B < 0$')
+        obj = ax.bar(adjusted_energy_levels, p_lam_neg_B / 2., 2*bar_width, alpha=bar_alpha, color='magenta', label=r'$B < 0$')
         if obj_to_rasterize is not None:
             obj_to_rasterize.append(obj)
-        obj = ax.bar(adjusted_energy_levels, p_lam_pos_B / 2., 2*bar_width, bottom=p_lam_neg_B / 2., alpha=0.75, color='blue',
+        obj = ax.bar(adjusted_energy_levels, p_lam_pos_B / 2., 2*bar_width, bottom=p_lam_neg_B / 2., alpha=bar_alpha, color='blue',
                label=r'$B \geq 0$')
         if obj_to_rasterize is not None:
             obj_to_rasterize.append(obj)
     else:
         plot_p_lam(ax, adjusted_energy_levels, np.r_[[1.], p_lam], color=color, bar_width=bar_width, zorder=zorder,
-                   lower_deciles=lower_deciles, upper_deciles=upper_deciles, obj_to_rasterize=obj_to_rasterize)
+                   lower_deciles=lower_deciles, upper_deciles=upper_deciles, obj_to_rasterize=obj_to_rasterize, bar_alpha=bar_alpha)
 
 
 def plot_p_lam(ax, energies, p_lam, color='blue', zorder=0, lower_deciles=None, upper_deciles=None, bar_width=0.0004,
-               obj_to_rasterize=None):
+               obj_to_rasterize=None, bar_alpha=0.75):
     if lower_deciles is None:
-        obj = ax.bar(energies, p_lam, 2*bar_width, alpha=0.75, color=color, zorder=zorder)
+        obj = ax.bar(energies, p_lam, 2*bar_width, alpha=bar_alpha, color=color, zorder=zorder)
     else:
         obj = ax.bar(energies, p_lam, 2*bar_width,
-                     yerr=np.transpose(np.c_[p_lam - lower_deciles, upper_deciles - p_lam]), alpha=0.75,
+                     yerr=np.transpose(np.c_[p_lam - lower_deciles, upper_deciles - p_lam]), alpha=bar_alpha,
                      color=color, zorder=zorder, capsize=3, ecolor='gray')
     if obj_to_rasterize is not None:
         obj_to_rasterize.append(obj)

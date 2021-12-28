@@ -2,22 +2,30 @@ import os
 import shutil
 from abc import ABC, abstractmethod
 
-from restools.timeintegration import TimeIntegrationChannelFlowV1, TimeIntegrationChannelFlowV2
+from restools.timeintegration import TimeIntegrationChannelFlowV1, TimeIntegrationChannelFlowV2, \
+    TimeIntegrationLowDimensional
 from comsdk.communication import BaseCommunication
 from comsdk.graph import Func
 from comsdk.edge import Edge, ExecutableProgramEdge, dummy_predicate, dummy_edge, InOutMapping
 import comsdk.comaux as comaux
 
+
 class StandardisedProgram:
-    def __init__(self, name: str, keyword_names=(), trailing_args_keys=()):
+    def __init__(self, name: str, keyword_names=(), trailing_args_keys=(),
+                 chaining_command_at_start='', chaining_command_at_end=''):
         self.name = name
         self.keyword_names = keyword_names
         self.trailing_args_keys = trailing_args_keys
+        self.chaining_command_at_start = chaining_command_at_start
+        self.chaining_command_at_end = chaining_command_at_end
 
 
 class StandardisedIntegrator(StandardisedProgram, ABC):
-    def __init__(self, name: str, keyword_names=(), trailing_args_keys=()):
-        StandardisedProgram.__init__(name, keyword_names=keyword_names, trailing_args_keys=trailing_args_keys)
+    def __init__(self, name: str, keyword_names=(), trailing_args_keys=(),
+                 chaining_command_at_start='', chaining_command_at_end=''):
+        StandardisedProgram.__init__(self, name, keyword_names=keyword_names, trailing_args_keys=trailing_args_keys,
+                                     chaining_command_at_start=chaining_command_at_start,
+                                     chaining_command_at_end=chaining_command_at_end)
 
     @property
     @classmethod
@@ -39,12 +47,20 @@ class StandardisedIntegrator(StandardisedProgram, ABC):
 
 
 class StandardisedProgramEdge(ExecutableProgramEdge):
-    def __init__(self, prog: StandardisedProgram, comm, relative_keys=(), keys_mapping={}):
-        io_mapping = InOutMapping(relative_keys=relative_keys, keys_mapping=keys_mapping)
+    def __init__(self, prog: StandardisedProgram, comm, relative_keys=(), keys_mapping={}, io_mapping=None,
+                 output_dict={}, flag_names=(), remote=False, stdout_processor=None):
+        io_mapping_ = io_mapping if io_mapping is not None else InOutMapping(relative_keys=relative_keys, keys_mapping=keys_mapping)
         super().__init__(prog.name, comm,
-                         io_mapping=io_mapping,
+                         io_mapping=io_mapping_,
                          keyword_names=prog.keyword_names,
-                         trailing_args_keys=prog.trailing_args_keys)
+                         trailing_args_keys=prog.trailing_args_keys,
+                         output_dict=output_dict,
+                         flag_names=flag_names,
+                         remote=remote,
+                         stdout_processor=stdout_processor,
+                         chaining_command_at_start=prog.chaining_command_at_start,
+                         chaining_command_at_end=prog.chaining_command_at_end,
+                         )
 
 
 class CouetteChannelflowV1(StandardisedIntegrator):
@@ -124,6 +140,72 @@ class SimulateflowChannelflowV2(StandardisedIntegrator):
             comm.execute('rm -r {}'.format(measurements_dir), data_path)
 
         return Edge(predicate, Func(func=glue_ke_z_measurements), io_mapping=io_mapping)
+
+    @classmethod
+    def concatenate_integration_piece(cls, d, input_datas_key='integration_subdir', output_data_key=None):
+        pass
+
+
+class MoehlisModelIntegrator(StandardisedIntegrator):
+    ti_class = TimeIntegrationLowDimensional
+
+    def __init__(self, input_filename_key='input_filename', nohup=False):
+        chaining_command_at_start = 'nohup' if nohup else ''
+        chaining_command_at_end = '> task.out 2> task.err < /dev/null &' if nohup else ''
+        super().__init__(name='time_integrate_moehlis.py',
+                         keyword_names=('cores',),
+                         trailing_args_keys=(input_filename_key,),
+                         chaining_command_at_start=chaining_command_at_start,
+                         chaining_command_at_end=chaining_command_at_end
+                         )
+
+    def postprocessor_edge(self, comm: BaseCommunication, predicate: Func = dummy_predicate,
+                           io_mapping: InOutMapping = InOutMapping()):
+        pass
+
+    @classmethod
+    def concatenate_integration_piece(cls, d, input_datas_key='integration_subdir', output_data_key=None):
+        pass
+
+
+class EsnIntegrator(StandardisedIntegrator):
+    ti_class = TimeIntegrationLowDimensional
+
+    def __init__(self, input_filename_key='input_filename', nohup=False):
+        chaining_command_at_start = 'nohup' if nohup else ''
+        chaining_command_at_end = '> task.out 2> task.err < /dev/null &' if nohup else ''
+        super().__init__(name='time_integrate_esn.py',
+                         keyword_names=('cores',),
+                         trailing_args_keys=(input_filename_key,),
+                         chaining_command_at_start=chaining_command_at_start,
+                         chaining_command_at_end=chaining_command_at_end
+                         )
+
+    def postprocessor_edge(self, comm: BaseCommunication, predicate: Func = dummy_predicate,
+                           io_mapping: InOutMapping = InOutMapping()):
+        pass
+
+    @classmethod
+    def concatenate_integration_piece(cls, d, input_datas_key='integration_subdir', output_data_key=None):
+        pass
+
+
+class EsnTrainer(StandardisedIntegrator):
+    ti_class = TimeIntegrationLowDimensional
+
+    def __init__(self, input_filename_key='input_filename', nohup=False):
+        chaining_command_at_start = 'nohup' if nohup else ''
+        chaining_command_at_end = '> task.out 2> task.err < /dev/null &' if nohup else ''
+        super().__init__(name='train_esn.py',
+                         keyword_names=('cores',),
+                         trailing_args_keys=(input_filename_key,),
+                         chaining_command_at_start=chaining_command_at_start,
+                         chaining_command_at_end=chaining_command_at_end
+                         )
+
+    def postprocessor_edge(self, comm: BaseCommunication, predicate: Func = dummy_predicate,
+                           io_mapping: InOutMapping = InOutMapping()):
+        pass
 
     @classmethod
     def concatenate_integration_piece(cls, d, input_datas_key='integration_subdir', output_data_key=None):

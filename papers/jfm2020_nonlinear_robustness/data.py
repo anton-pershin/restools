@@ -87,6 +87,36 @@ class SimulationsInfo:
         self.task_for_uncontrolled_case = task_for_uncontrolled_case
 
 
+class MinimalSeedInfo:
+    """
+    Class MinimalInfo represents a summary data from the minimal seed calculations for different amplitudes and
+    frequencies of in-phase spanwise wall oscillations:
+
+    re
+      Reynolds number
+
+    amplitudes
+      A list of amplitudes
+
+    frequencies
+      A list of frequencies
+
+    kinetic_energies
+      A 2D-list of kinetic energies of minimal seeds (1st index = 1st index in amplitudes, 2nd
+      index = 2nd index in frequencies).
+
+    kinetic_energy_for_uncontrolled_case
+      Minimal seed KE for the uncontrolled case
+    """
+    def __init__(self, re: float, amplitudes: List[float], frequencies: List[float], kinetic_energies: List[List[float]],
+                 kinetic_energy_for_uncontrolled_case: float):
+        self.re = re
+        self.amplitudes = amplitudes
+        self.frequencies = frequencies
+        self.kinetic_energies = kinetic_energies
+        self.kinetic_energy_for_uncontrolled_case = kinetic_energy_for_uncontrolled_case
+
+
 class Summary(JsonSerializable):
     """
     Class Summary is a json-serializable summary of the study.
@@ -102,11 +132,13 @@ class Summary(JsonSerializable):
       probability
     """
 
-    def __init__(self, edge_states_info: SimulationsInfo, simulations_with_full_fields_saved: SimulationsInfo,
+    def __init__(self, edge_states_info: SimulationsInfo, minimal_seed_info: MinimalSeedInfo,
+                 simulations_with_full_fields_saved: SimulationsInfo,
                  p_lam_info: LaminarisationProbabilityInfo, seed: int, seed_for_bayesian_example: int,
                  default_sample_number: int, sample_size_per_energy_level: int,
                  minimum_sample_size_per_energy_level: int):
         self.edge_states_info = edge_states_info
+        self.minimal_seed_info = minimal_seed_info
         self.simulations_with_full_fields_saved = simulations_with_full_fields_saved
         self.p_lam_info = p_lam_info
         self.seed = seed

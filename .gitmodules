@@ -4,3 +4,6 @@
 [submodule "pycomsdk"]
 	path = pycomsdk
 	url = https://sa2systems.ru:88/com/pycomsdk.git
+[submodule "reducedmodels"]
+	path = reducedmodels
+	url = https://github.com/anton-pershin/reducedmodels.git

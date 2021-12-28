@@ -61,7 +61,7 @@ if __name__ == '__main__':
                    max_ke_eps=0.02, initial_cutoff_time=1000.)
     ke_distr = ens.ke_distribution()
     ax_edge_energy.plot([min_freq, max_freq], [ke_distr.mean(), ke_distr.mean()], color='black', linewidth=2,
-                        label=r'$A = 0$')
+                        label=r'$W_{osc} = 0$')
     for a_i, a in enumerate(summary.edge_states_info.amplitudes):
         edge_state_energy_means = []
         edge_state_energy_stds = []
@@ -90,7 +90,7 @@ if __name__ == '__main__':
                 edge_state_energy_stds.append(ke_distr.std())
 
         _plot_edge_state_energy(ax_edge_energy, edge_state_energy_means, edge_state_energy_stds,
-                                summary.edge_states_info.frequencies, r'$A = ' + str(a) + r'$')
+                                summary.edge_states_info.frequencies, r'$W_{osc} = ' + str(a) + r'$')
     ax_edge_energy.set_xscale('log', basex=2)
     ax_edge_energy.set_xlabel(r'$\omega$', fontsize=16)
     ax_edge_energy.set_ylabel(r'$E_{edge}$', fontsize=16)
@@ -127,7 +127,7 @@ if __name__ == '__main__':
                             cmap=plt.get_cmap('viridis', 5),
                             cbar_kw=dict(ticks=np.arange(-1, 4),
                                          format=fmt))
-    ax_cells.set_xlabel(r'$A$', fontsize=16)
+    ax_cells.set_xlabel(r'$W_{osc}$', fontsize=16)
     ax_cells.set_ylabel(r'$\omega$', fontsize=16)
     label_axes(ax_cells, label='(a)', loc=(0.5, 1.03), fontsize=16)
     label_axes(ax_edge_energy, label='(b)', loc=(0.5, 1.03), fontsize=16)

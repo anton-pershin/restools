@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from restools.timeintegration_builders import get_ti_builder
 from restools.plotting import label_axes, build_zooming_axes_for_plotting_with_box, rasterise_and_save, reduce_eps_size
 from papers.jfm2020_probabilistic_protocol.data import Summary, SingleConfiguration
-from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM, plot_p_lam
+from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM, plot_p_lam, plot_p_lam_from_conf
 from comsdk.comaux import load_from_json
 from comsdk.research import Research
 
@@ -101,7 +101,7 @@ if __name__ == '__main__':
                 obj_to_rasterize.append(lines[0])
         label_axes(ax, label=label, loc=(0.33, 1.04), fontsize=20)
     fname = 'ics_uniform_B.eps'
-    rasterise_and_save(fname, rasterize_list=obj_to_rasterize, fig=fig, dpi=300)
+    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
     reduce_eps_size(fname)
     plt.show()
 
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     for ax, conf, label in zip(axes, summary.confs, (r'(a) $Re= 400$', r'(b)  $Re= 500$', r'(c)  $Re= 700$')):
         fitting = LaminarisationProbabilityFittingFunction2020JFM.from_data(0.5 * np.array([0.] + summary.energy_levels),
                                                                             np.array([1.] + conf.p_lam))
-        plot_p_lam(ax, summary, conf)
+        plot_p_lam_from_conf(ax, summary, conf)
         ax.plot([conf.edge_state_energy_mean, conf.edge_state_energy_mean], [0.0, 1.0], '--',
                 linewidth=2,
                 color='black',
@@ -174,7 +174,7 @@ if __name__ == '__main__':
         lines = _plot_rps_in_box(zoom_ax, rps, color, parent_box)
         obj_to_rasterize.append(lines[0])
     fname = 'ics_uniform_B_osc.eps'
-    rasterise_and_save(fname, rasterize_list=obj_to_rasterize, fig=fig, dpi=300)
+    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
     reduce_eps_size(fname)
     plt.show()
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
     conf_unctrl = summary.confs[1]
     conf_ctrl = summary.confs[3]
     fig, ax = plt.subplots(1, 1, figsize=(12, 4))
-    plot_p_lam(ax, summary, conf_ctrl)
+    plot_p_lam_from_conf(ax, summary, conf_ctrl)
     fitting_ctrl = LaminarisationProbabilityFittingFunction2020JFM.from_data(0.5 * np.array([0.] + summary.energy_levels),
                                                                              np.array([1.] + conf_ctrl.p_lam))
     ax.plot([conf_unctrl.edge_state_energy_mean, conf_unctrl.edge_state_energy_mean], [0.0, 1.0], '--',
@@ -209,5 +209,105 @@ if __name__ == '__main__':
     plt.tight_layout()
     fname = 'p_lam_osc_with_fitting.eps'
     plt.savefig(fname)
+    reduce_eps_size(fname)
+    plt.show()
+
+    # PLOT P_LAM FOR RE = 500 FOR POSTER
+
+    obj_to_rasterize = []
+    fig, ax = plt.subplots(1, 1, figsize=(12, 4))
+    edge_energy_no_osc_at_Res = [0.01958, 0.0182, 0.0166]
+    edge_energy_osc = 0.0115
+    fittings = []
+    conf = summary.confs[1]
+    plot_p_lam_from_conf(ax, summary, conf, bar_alpha=0.4, obj_to_rasterize=obj_to_rasterize)
+#    label_axes(ax, label=label, loc=(0.45, 1.05), fontsize=16)
+    Es = np.linspace(0., ax.get_xlim()[1], 200)
+    fittings = [LaminarisationProbabilityFittingFunction2020JFM.from_data(0.5 * np.array([0.] + summary.energy_levels),
+                                                                        np.array([1.] + conf.p_lam)) for conf in summary.confs]
+    for conf, color in zip(summary.confs, ('green', 'cyan', 'brown')):
+        fitting  = LaminarisationProbabilityFittingFunction2020JFM.from_data(0.5 * np.array([0.] + summary.energy_levels),
+                                                                    np.array([1.] + conf.p_lam))
+        ax.plot(Es, fitting(Es), linewidth=2, color=color)  # red, green, yellowgreen, lime, brown are OK
+        ax.plot([conf.edge_state_energy_mean, conf.edge_state_energy_mean], [0.0, 1.0], '--',
+                linewidth=2,
+                color=color)
+                #label=r'$E_{edge}$')
+    ax.set_xlabel(r'$E$', fontsize=16)
+    ax.set_ylabel(r'$P_{lam}$', fontsize=16)
+    ax.legend(loc='upper right', fontsize=16)
+    ax.grid()
+    plt.tight_layout()
+    #plt.subplots_adjust(top=0.96, hspace=0.3)
+    fname = 'p_lam_re_500_poster.eps'
+    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
+    reduce_eps_size(fname)
+    plt.show()
+
+    # PLOT P_LAM FOR UNCONTROLLED SYSTEM FOR PRESENTATION
+
+    fig, axes = plt.subplots(3, 1, figsize=(12, 7))
+    edge_energy_no_osc_at_Res = [0.01958, 0.0182, 0.0166]
+    edge_energy_osc = 0.0115
+    fittings = []
+    for ax, conf, label in zip(axes, summary.confs, (r'(a) $Re= 400$', r'(b)  $Re= 500$', r'(c)  $Re= 700$')):
+        fitting = LaminarisationProbabilityFittingFunction2020JFM.from_data(0.5 * np.array([0.] + summary.energy_levels),
+                                                                            np.array([1.] + conf.p_lam))
+        plot_p_lam_from_conf(ax, summary, conf)
+        ax.plot([conf.edge_state_energy_mean, conf.edge_state_energy_mean], [0.0, 1.0], '--',
+                linewidth=2,
+                color='black',
+                label=r'$E_{edge}$')
+        fittings.append(fitting)
+        ax.set_ylabel(r'$P_{lam}$', fontsize=16)
+        ax.legend(loc='upper right', fontsize=16)
+        ax.grid()
+        label_axes(ax, label=label, loc=(0.45, 1.05), fontsize=16)
+    Es = np.linspace(0., ax.get_xlim()[1], 200)
+    for ax in axes:
+        for fitting, color in zip(fittings, ('green', 'cyan', 'brown')):
+            ax.plot(Es, fitting(Es), linewidth=2, color=color)  # red, green, yellowgreen, lime, brown are OK
+    axes[-1].set_xlabel(r'$\frac{1}{2}||\boldsymbol{u}||^2$', fontsize=16)
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.96, hspace=0.3)
+    fname = 'p_lam_pres.eps'
+    plt.savefig(fname)
+    reduce_eps_size(fname)
+    plt.show()
+
+    # PLOT P_LAM FOR CONTROLLED SYSTEM FOR POSTER
+
+    obj_to_rasterize = []
+    conf_unctrl = summary.confs[1]
+    conf_ctrl = summary.confs[3]
+    fig, ax = plt.subplots(1, 1, figsize=(12, 4))
+    plot_p_lam_from_conf(ax, summary, conf_ctrl, bar_alpha=0.4, obj_to_rasterize=obj_to_rasterize)
+    fitting_ctrl = LaminarisationProbabilityFittingFunction2020JFM.from_data(0.5 * np.array([0.] + summary.energy_levels),
+                                                                             np.array([1.] + conf_ctrl.p_lam))
+    ax.plot([summary.confs[0].edge_state_energy_mean, summary.confs[0].edge_state_energy_mean], [0.0, 1.0], '--',
+            linewidth=2,
+            color='green')
+    ax.plot([conf_unctrl.edge_state_energy_mean, conf_unctrl.edge_state_energy_mean], [0.0, 1.0], '--',
+            linewidth=2,
+            color='cyan')
+    ax.plot([conf_ctrl.edge_state_energy_mean, conf_ctrl.edge_state_energy_mean], [0.0, 1.0], '--',
+            linewidth=2,
+            color='black')
+    ax.fill_between([conf_ctrl.edge_state_energy_mean - conf_ctrl.edge_state_energy_std,
+                     conf_ctrl.edge_state_energy_mean + conf_ctrl.edge_state_energy_std],
+                    [0.0, 0.0], [1.0, 1.0],
+                    color='lightgray', zorder=-2000)
+    ax.set_ylabel(r'$P_{lam}$', fontsize=16)
+    ax.legend(loc='upper right', fontsize=16)
+    ax.grid()
+    Es = np.linspace(0., ax.get_xlim()[1], 200)
+#    ax.plot(Es, fittings[2](Es), linewidth=2, color='brown')  # fitting for unctrl at Re = 700
+    ax.plot(Es, fittings[1](Es), linewidth=2, color='cyan')  # fitting for unctrl at Re = 500
+    ax.plot(Es, fittings[0](Es), linewidth=2, color='green')  # fitting for unctrl at Re = 400
+    ax.plot(Es, fitting_ctrl(Es), linewidth=2, color='black')
+    ax.set_xlabel(r'$E$', fontsize=16)
+    plt.tight_layout()
+    fname = 'p_lam_osc_with_fitting_poster.eps'
+    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
     reduce_eps_size(fname)
     plt.show()

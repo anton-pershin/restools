@@ -1,0 +1,33 @@
+{
+    "oxford_output_path": "/network/aopp/chaos/pred/pershin/oifs/oifsruns",
+    "l91_file": "/home/tony/projects/oxford/pershin/misctools/L91.csv",
+    "l137_file": "/home/tony/projects/oxford/pershin/misctools/L137.csv",
+    "res_id": "IFSMPI",
+    "oifs_runs_task": 3,
+    "rp_versions": [
+        {
+            "descr": "\n24-hours weather prediction for double-precision MPI comminication (trltom and trmtol). Ground truth for us",
+            "name": "52bits"
+        },
+        {
+            "descr": "\n24-hours weather prediction for single-precision MPI comminication (trltom and trmtol)",
+            "name": "23bits"
+        },
+        {
+            "descr": "\n24-hours weather prediction for 16-sbits-precision MPI comminication (trltom and trmtol)",
+            "name": "16bits"
+        },
+        {
+            "descr": "\n24-hours weather prediction for half-precision MPI comminication (trltom and trmtol) without the control of exponent.\nThis is a vanilla half-precision version without any improvements",
+            "name": "10bits"
+        },
+        {
+            "descr": "24-hours weather prediction for half-precision MPI comminication (trltom and trmtol) without the control of \nexponent. This is an improved version where parts of the communicated buffers corresponding to zero Fourier modes \nare kept in double precision. This gives an accuracy comparable to a single-precision version",
+            "name": "10bits_zero_mode_52bits_in_direct_and_inverse"
+        },
+        {
+            "descr": "24-hours weather prediction for IEEE half-precision MPI comminication (trltom and trmtol) with the control of \nexponent. TO BE UPDATED!!!",
+            "name": "10bits_zero_mode_52bits_in_direct_and_inverse_IEEE_half_precision"
+        }
+    ]
+}
