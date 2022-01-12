@@ -27,10 +27,11 @@ class Summary(JsonSerializable):
       probability
     """
 
-    def __init__(self, res_id: str, task_for_oifs_results: int, l91_file: str, l137_file: str, oxford_input_path: str, oxford_output_path: str,
+    def __init__(self, res_id: str, task_for_oifs_results: int, task_for_era5_data:int, l91_file: str, l137_file: str, oxford_input_path: str, oxford_output_path: str,
                  solvers: List[str], rp_versions: List[ReducedPrecisionVersion]):
         self.res_id = res_id
         self.task_for_oifs_results = task_for_oifs_results
+        self.task_for_era5_data = task_for_era5_data
         self.l91_file = l91_file
         self.l137_file = l137_file
         self.oxford_input_path = oxford_input_path

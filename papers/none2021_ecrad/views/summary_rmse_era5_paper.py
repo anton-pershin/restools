@@ -14,7 +14,7 @@ import iris.plot as iplt
 
 import restools
 from papers.none2021_ecrad.data import Summary
-from papers.none2021_ecrad.extensions import ERA5Data, IfsIO, extract_or_interpolate, get_ifs_rel_diff, get_ifs_abs_rel_diff
+from papers.none2021_ecrad.extensions import ERA5Data, IfsIO, extract_or_interpolate, get_ifs_rel_diff, get_ifs_abs_rel_diff, get_ifs_rmse
 from comsdk.research import Research
 from comsdk.comaux import load_from_json, find_all_files_by_named_regexp
 from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
@@ -27,13 +27,21 @@ if __name__ == '__main__':
     res_id = summary.res_id
     res = Research.open(res_id)
     task_path = res.get_task_path(summary.task_for_oifs_results)
+    era5_task_path = res.get_task_path(summary.task_for_era5_data)
     step_shifts = (0, 64, 128, 192, 256, 320)
     #step_shifts = (0, 160, 320)
-    ifs_data_ref = ERA5Data('/Volumes/Seagate/Leeds/PhD/research/2021-05-18_ecRad_reduced_precision/17-ERA5DataForEcRad/anton_T_t_pl_days.nc',
-                            any_ref_nc_file_containing_same_lat_and_lon='/Volumes/Seagate/Leeds/PhD/research/2021-05-18_ecRad_reduced_precision/18-ecRadIntegratedInOpenIFSUpdated/hgom/ecrad_tripleclouds_52bits/sh/0.nc',
+    ecrad_ref_run = 'ecrad_tripleclouds_52bits'
+    ifs_era5_data = ERA5Data(os.path.join(era5_task_path, 'anton_T_t_pl_days.nc'),
+                            any_ref_nc_file_containing_same_lat_and_lon=os.path.join(task_path, 'hgom', ecrad_ref_run, 'sh', '0.nc'),
                             ref_lat_lon_naming='short')
-    ecrad_runs = ('ecrad_mcica_52bits', 'ecrad_tripleclouds_52bits', 'ecrad_tripleclouds_23bits', 'ecrad_tripleclouds_mixed_precision')
-    ecrad_run_labels = ('McICA (52 sbits)', 'Tripleclouds (52 sbits)', 'Tripleclouds (23 sbits)', 'Tripleclouds (mixed precision)')
+    ifs_era5_data_with_t2m = ERA5Data(os.path.join(era5_task_path, 'anton_T_t_sfc_days.nc'),
+                                      any_ref_nc_file_containing_same_lat_and_lon=os.path.join(task_path, 'hgom', ecrad_ref_run, 'sh', '0.nc'),
+                                      ref_lat_lon_naming='short')
+    ifs_io_ref = IfsIO([os.path.join(task_path, 'hgom', ecrad_ref_run, 'sh', f'{id_}.nc') for id_ in step_shifts],
+                       [os.path.join(task_path, 'hgom', ecrad_ref_run, 'gg', f'{id_}.nc') for id_ in step_shifts],
+                       l91_file=summary.l91_file)
+    ecrad_runs = ('ecrad_mcica_52bits', 'ecrad_tripleclouds_23bits', 'ecrad_tripleclouds_mixed_precision')
+    ecrad_run_labels = ('McICA (52 sbits)', 'Tripleclouds (23 sbits)', 'Tripleclouds (mixed precision)')
     ecrad_ref_run_label = 'ERA5'
     quantity_info = [
         {
@@ -46,11 +54,11 @@ if __name__ == '__main__':
             'pressure': 700.,
             'title': '700-hPa temperature',
         },
-#        {
-#            'quantity': 'temperature_at_2m',
-#            'pressure': None,
-#            'title': '2-m temperature',
-#        },
+        {
+            'quantity': 'temperature_at_2m',
+            'pressure': None,
+            'title': '2-m temperature',
+        },
     ]
     n_timesteps = len(step_shifts)
     n_runs = len(ecrad_runs)
@@ -72,20 +80,23 @@ if __name__ == '__main__':
             vals = []
             days = []
             for ts_i in range(n_timesteps):
-                q_diff = get_ifs_abs_rel_diff(ifs_data_ref, ifs_io, ts_i, ecrad_runs[run_i], quantity=quantity_info[q_i]['quantity'], 
-                                              pressure=quantity_info[q_i]['pressure'])
-                q_diff = q_diff.collapsed(['latitude', 'longitude'], iris.analysis.MEAN)
-                vals.append(q_diff.data.item())
+                ifs_era5_data_ref = ifs_era5_data_with_t2m if quantity_info[q_i]['quantity'] == 'temperature_at_2m' else ifs_era5_data
+                ref_rmse = get_ifs_rmse(ifs_era5_data_ref, ifs_io_ref, ts_i, ecrad_runs[run_i], quantity=quantity_info[q_i]['quantity'], 
+                                        pressure=quantity_info[q_i]['pressure'])
+                rmse = get_ifs_rmse(ifs_era5_data_ref, ifs_io, ts_i, ecrad_runs[run_i], quantity=quantity_info[q_i]['quantity'], 
+                                    pressure=quantity_info[q_i]['pressure'])
+                rel_rmse_deviation = (rmse.data.item() - ref_rmse.data.item()) / ref_rmse.data.item()
+                vals.append(rel_rmse_deviation)
                 days.append(ifs_io.time_shift(ts_i).days)
             axes[q_i].plot(days, vals, 'o--', label=ecrad_run_labels[run_i], 
                            linewidth=2 if ecrad_runs[run_i] == 'ecrad_tripleclouds_23bits' else 3)
         axes[q_i].set_xticks([0, 2, 4, 6, 8, 10])
         axes[q_i].set_xlabel('Forecast day', fontsize=16)
         axes[q_i].set_title(quantity_info[q_i]['title'], fontsize=16)
-        axes[q_i].set_ylim((-0.0002, 0.014))
+        axes[q_i].set_ylim((-0.05, 0.05))
         axes[q_i].grid()
         axes[q_i].legend()
     axes[0].set_ylabel('Relative error', fontsize=16)
     plt.tight_layout()
-    plt.savefig(f'summary_rel_errors.eps', dpi=200)
+    plt.savefig(f'summary_rmse_era5.eps', dpi=200)
     plt.show()

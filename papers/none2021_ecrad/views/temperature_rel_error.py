@@ -7,7 +7,7 @@ import json
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.colors import DivergingNorm
+from matplotlib.colors import TwoSlopeNorm
 import iris
 import iris.plot as iplt
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
         q = extract_or_interpolate(getattr(ifs_io, quantity)(ts_i), pressure)
         #print(np.min(q.data), np.max(q.data))
         plt.subplot(1, n_cols, col)
-        cf = iplt.contourf(q, 32, norm=DivergingNorm(vmin=vmin, vcenter=vcenter, vmax=vmax), 
+        cf = iplt.contourf(q, 32, norm=TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax), 
                             cmap=plt.get_cmap('seismic'))
         plt.gca().coastlines()
         plt.gca().set_title(f'+{ifs_io.time_shift(ts_i)}')

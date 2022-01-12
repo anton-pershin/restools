@@ -7,7 +7,7 @@ import json
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.colors import DivergingNorm
+from matplotlib.colors import TwoSlopeNorm
 import iris
 import iris.plot as iplt
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     res_id = summary.res_id
     res = Research.open(res_id)
     #task_path = res.get_task_path(summary.task_for_oifs_results)
-    task_path = res.get_task_path(17)
+    task_path = res.get_task_path(18)
     step_shifts = (0, 64, 128, 192, 256, 320)
     #ecrad_runs = ('ecrad_mcica_52bits', 'ecrad_tripleclouds_52bits', 'ecrad_tripleclouds_mixed_precision')
     ecrad_runs = ('era5', 'ecrad_tripleclouds_52bits')
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     for run_i in range(n_rows):
         for ts_i in range(n_cols):
             if run_i == 0:
-                ifs_io = ERA5Data('/media/tony/Seagate/Leeds/PhD/research/2021-05-18_ecRad_reduced_precision/17-ERA5DataForEcRad/anton_T_t_pl_days.nc')
+                ifs_io = ERA5Data('/Volumes/Seagate/Leeds/PhD/research/2021-05-18_ecRad_reduced_precision/17-ERA5DataForEcRad/anton_T_t_pl_days.nc')
             else:
                 ifs_io = IfsIO(time_series_sh_files=[os.path.join(task_path, 'hgom', ecrad_runs[run_i], 'sh', f'{id_}.nc') for id_ in step_shifts],
                                time_series_gg_files=[os.path.join(task_path, 'hgom', ecrad_runs[run_i], 'sh', f'{id_}.nc') for id_ in step_shifts],
@@ -86,7 +86,7 @@ if __name__ == '__main__':
             #print(np.min(q.data), np.max(q.data))
             #plt.subplot(1, n_cols, col)
             plt.sca(axes[run_i][ts_i])
-            cf = iplt.contourf(q, 32, norm=DivergingNorm(vmin=vmin, vcenter=vcenter, vmax=vmax), 
+            cf = iplt.contourf(q, 32, norm=TwoSlopeNorm(vmin=vmin, vcenter=vcenter, vmax=vmax), 
                                 cmap=plt.get_cmap('seismic'))
             plt.gca().coastlines()
             plt.gca().set_title(f'+{ifs_io.time_shift(ts_i)}')

@@ -1,10 +1,11 @@
 {
-    "l91_file": "/home/tony/projects/oxford/pershin/misctools/L91.csv",
-    "l137_file": "/home/tony/projects/oxford/pershin/misctools/L137.csv",
+    "l91_file": "/Users/tony/reps/oxford/pershin/misctools/L91.csv",
+    "l137_file": "/Users/tony/reps/oxford/pershin/misctools/L137.csv",
     "oxford_input_path": "/network/aopp/chaos/pred/shared/ecRad_data",
     "oxford_output_path": "/network/aopp/chaos/pred/pershin/ecrad/outputs",
     "res_id": "ECRAD",
-    "task_for_oifs_results": 16,
+    "task_for_oifs_results": 18,
+    "task_for_era5_data": 17,
     "rp_versions": [
         {
             "descr": "Vanilla reduced precision, without any improvements. Simply all the variables were turned to given precision (except for those leading to floating-point exceptions)",

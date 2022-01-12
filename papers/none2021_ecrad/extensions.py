@@ -4,6 +4,7 @@ from functools import partial
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from typing import List, Dict, Literal, Sequence
+from iris import coord_systems
 
 import numpy as np
 import pandas as pd
@@ -173,10 +174,13 @@ class IfsIO:
         }
         for _, dimcoord in self.iris_pressure_levels.items():
             dimcoord.convert_units('hPa')
+        cs = iris.coord_systems.GeogCS(6371229)
         self.iris_latitude = iris.coords.DimCoord(np.array(self.time_series_sh_datasets[0]['lat']),
-                                                  standard_name='latitude', units='degree_north')
+                                                  standard_name='latitude', units='degree_north',
+                                                  coord_system=cs)
         self.iris_longitude = iris.coords.DimCoord(np.array(self.time_series_sh_datasets[0]['lon']),
-                                                   standard_name='longitude', units='degree_east', circular=True)
+                                                   standard_name='longitude', units='degree_east', circular=True,
+                                                   coord_system=cs)
 
     def __len__(self):
         return len(self.time_series_sh_datasets)
@@ -220,6 +224,14 @@ class IfsIO:
 
     def surface_pressure(self, time_step_i):
         return self._ifs_var_as_iris_cube('lnsp', 'surface_air_pressure', self.time_series_sh_datasets[time_step_i], units='Pa')
+
+    def surface_downwards_shortwave_radiation(self, time_step_i):
+        #'SSRD', J m-2
+        return self._ifs_var_as_iris_cube('SSRD', None, self.time_series_gg_datasets[time_step_i], units='J m-2')
+    
+    def surface_downwards_longwave_radiation(self, time_step_i):
+        # 'STRD', J m-2
+        return self._ifs_var_as_iris_cube('STRD', None, self.time_series_gg_datasets[time_step_i], units='J m-2')
 
     def _ifs_var_as_iris_cube(self, var, standard_name, original_dataset, units=None):
         if len(original_dataset[var].dimensions) == 0:
@@ -301,29 +313,34 @@ class ERA5Data:
         return current_datetime - initial_datetime
 
     def temperature(self, time_step_i):
-#    def _ifs_var_as_iris_cube(self, var, standard_name, original_dataset, units=None):
+        return self._ifs_var_as_iris_cube('t', 'air_temperature')
+
+    def temperature_at_2m(self, time_step_i):
+        return self._ifs_var_as_iris_cube('t2m', 'air_temperature')
+
+    def _ifs_var_as_iris_cube(self, var, standard_name):
         dim_coords_and_dims = []
-        standard_name = 'air_temperature'
+        #standard_name = 'air_temperature'
         units = None
-        var = 't'
+        #var = 't'
         time = None
         surface = False
         nc_dataset_to_take_lat_and_lon_from = self.any_ref_nc_dataset_containing_same_lat_and_lon if self.any_ref_nc_dataset_containing_same_lat_and_lon is not None else self.nc_dataset
         lat_name = 'latitude' if self.ref_lat_lon_naming == 'long' else 'lat'
         lon_name = 'longitude' if self.ref_lat_lon_naming == 'long' else 'lon'
-
+        cs = iris.coord_systems.GeogCS(6371229)
         for i, dim_name in enumerate(self.nc_dataset[var].dimensions):
             if dim_name == 'level':
                 dim_coords_and_dims.append((iris.coords.DimCoord(np.array(self.nc_dataset['level']),
-                                                standard_name='air_pressure', units='hPa'), 
+                                                standard_name='air_pressure', units='hPa'),
                                             len(dim_coords_and_dims)))
             elif dim_name == 'latitude':
                 dim_coords_and_dims.append((iris.coords.DimCoord(np.array(nc_dataset_to_take_lat_and_lon_from[lat_name]),
-                                                standard_name='latitude', units='degree_north'), 
+                                                standard_name='latitude', units='degree_north', coord_system=cs), 
                                             len(dim_coords_and_dims)))
             elif dim_name == 'longitude':
                 dim_coords_and_dims.append((iris.coords.DimCoord(np.array(nc_dataset_to_take_lat_and_lon_from[lon_name]),
-                                                standard_name='longitude', units='degree_east', circular=True), 
+                                                standard_name='longitude', units='degree_east', circular=True, coord_system=cs), 
                                             len(dim_coords_and_dims)))
             elif dim_name == 'time':
                 time = float(self.nc_dataset['time'][time_step_i])
@@ -726,7 +743,9 @@ def get_ifs_abs_rel_diff(ifs_io, ifs_io_rp, ts_i, dir_, quantity='geopotential',
         q_rp = getattr(ifs_io_rp, quantity)(ts_i)
     q = extract_or_interpolate(getattr(ifs_io, quantity)(ts_i), pressure)
     q_rp = extract_or_interpolate(getattr(ifs_io_rp, quantity)(ts_i), pressure)
+    zero_indices = (q.data == 0.)
     rel_diff = iris.analysis.maths.abs((q - q_rp) / q)
+    rel_diff.data[zero_indices] = 0.
     max_value = np.max(rel_diff.data)
     min_value = np.min(rel_diff.data)
     print(f'Dir: {dir_}, time shift: +{ifs_io.time_shift(ts_i)}, max: {max_value}, min: {min_value}')

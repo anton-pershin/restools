@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import SupportsFloat, Mapping, Any, Type
-from typing_extensions import Literal
+from typing import SupportsFloat, Mapping, Any, Type, Literal
 import logging
 import pickle
 import json
