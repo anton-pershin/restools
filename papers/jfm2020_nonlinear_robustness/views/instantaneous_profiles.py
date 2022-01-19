@@ -15,7 +15,7 @@ from comsdk.research import Research
 from comsdk.comaux import load_from_json
 from thequickmath.differentiation.finite_differences import fd
 from thequickmath.field import average
-from thequickmath.aux import np_index
+from thequickmath.misc import np_index
 
 
 def _plot_ke_and_turbulent_profile(ax_ke, ax_profile, task, task_path, c):

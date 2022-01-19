@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 import os
 import functools
-from typing import Optional, Type, Sequence, Union, Tuple, Callable
-from typing_extensions import Literal
+from typing import Optional, Type, Sequence, Union, Tuple, Callable, Literal
 from operator import itemgetter, add
 
 import numpy as np
@@ -15,7 +14,7 @@ from restools.timeintegration import TimeIntegration, Perturbation
 from restools.timeintegration_builders import TimeIntegration3DBuilder
 import comsdk.comaux as comaux
 from comsdk.research import Research
-from thequickmath.aux import index_for_almost_exact_coincidence_unsorted
+from thequickmath.misc import index_for_almost_exact_coincidence_unsorted
 from thequickmath.stats import ScipyDistribution
 
 

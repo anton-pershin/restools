@@ -18,7 +18,7 @@ from comsdk.edge import Edge, ExecutableProgramEdge, QsubScriptEdge, UploadOnRem
     InOutMapping, connect_branches
 from comsdk.graph import Graph, State, Func
 import comsdk.comaux as comaux
-from thequickmath.aux import is_sequence
+from thequickmath.misc import is_sequence
 
 
 class RemoteIntegrationGraph(Graph):

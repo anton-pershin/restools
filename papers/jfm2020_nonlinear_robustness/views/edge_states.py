@@ -14,7 +14,7 @@ from restools.plotting import label_axes, cell_heatmap, rasterise_and_save, redu
 from papers.jfm2020_nonlinear_robustness.data import Summary
 from comsdk.research import Research
 from comsdk.comaux import load_from_json
-from thequickmath.aux import index_for_almost_exact_coincidence
+from thequickmath.misc import index_for_almost_exact_coincidence
 
 
 def _plot_edge_state_energy(ax, edge_state_energy_means: List[float], edge_state_energy_stds: List[float],

@@ -1,6 +1,6 @@
 from operator import itemgetter
 
-from thequickmath.aux import index_for_almost_exact_coincidence
+from thequickmath.misc import index_for_almost_exact_coincidence
 
 
 class Function:

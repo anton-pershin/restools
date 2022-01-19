@@ -1,5 +1,4 @@
-from typing import Optional, Sequence
-from typing_extensions import TypedDict
+from typing import Optional, Sequence, TypedDict
 
 import numpy as np
 

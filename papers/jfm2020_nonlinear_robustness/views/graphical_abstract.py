@@ -14,7 +14,7 @@ from restools.plotting import label_axes, cell_heatmap, rasterise_and_save, redu
 from papers.jfm2020_nonlinear_robustness.data import Summary
 from comsdk.research import Research
 from comsdk.comaux import load_from_json
-from thequickmath.aux import index_for_almost_exact_coincidence
+from thequickmath.misc import index_for_almost_exact_coincidence
 
 
 def _find_edgetracking_paths(path):

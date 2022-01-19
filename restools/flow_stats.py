@@ -4,7 +4,7 @@ import numpy as np
 
 from restools.timeintegration import TimeIntegration
 from restools.relaminarisation import is_relaminarised
-from thequickmath.aux import index_for_almost_exact_coincidence, index_for_closest_element
+from thequickmath.misc import index_for_almost_exact_coincidence, index_for_closest_element
 from thequickmath.stats import EmpiricalDistribution
 from thequickmath.field import Field, zeros_like
 

@@ -15,7 +15,7 @@ from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary, 
 from papers.jfm2020_probabilistic_protocol.extensions import RandomPerturbationFilenameJFM2020, \
     DataDirectoryJFM2020AProbabilisticProtocol, LaminarisationProbabilityFittingFunction2020JFM
 from thequickmath.stats import EmpiricalDistribution
-from thequickmath.aux import np_index
+from thequickmath.misc import np_index
 from comsdk.comaux import load_from_json, dump_to_json
 from comsdk.research import Research
 
