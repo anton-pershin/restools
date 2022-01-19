@@ -1,9 +1,12 @@
 [submodule "thequickmath"]
 	path = thequickmath
 	url = https://github.com/anton-pershin/thequickmath
+	branch = master
 [submodule "pycomsdk"]
 	path = pycomsdk
 	url = https://sa2systems.ru:88/com/pycomsdk.git
+	branch = dev
 [submodule "reducedmodels"]
 	path = reducedmodels
 	url = https://github.com/anton-pershin/reducedmodels.git
+	branch = main
