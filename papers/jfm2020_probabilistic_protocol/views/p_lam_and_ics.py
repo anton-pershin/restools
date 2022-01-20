@@ -63,8 +63,7 @@ def _plot_rps_in_box(box_ax, rps, color, parent_box):
 
 
 if __name__ == '__main__':
-    matplotlib.rc('text', usetex=True)
-    matplotlib.rcParams['text.latex.preamble']=[r"\usepackage{amsmath}"]
+    plt.style.use('resources/default.mplstyle')
 
     summary = load_from_json(Summary)
     ti_builder = get_ti_builder()
@@ -100,9 +99,11 @@ if __name__ == '__main__':
                 lines = _plot_rps_in_box(zoom_ax, rps, color, parent_box)
                 obj_to_rasterize.append(lines[0])
         label_axes(ax, label=label, loc=(0.33, 1.04), fontsize=20)
-    fname = 'ics_uniform_B.eps'
-    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
-    reduce_eps_size(fname)
+    #fname = 'ics_uniform_B.eps'
+    #rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
+    #reduce_eps_size(fname)
+    fname = 'ics_uniform_B.png'
+    plt.savefig(fname, dpi=300)
     plt.show()
 
     # PLOT GRAPHICAL ABSTRACT
@@ -173,9 +174,11 @@ if __name__ == '__main__':
     for rps, color in zip((lam_rps, turb_rps), ('black', 'orange')):
         lines = _plot_rps_in_box(zoom_ax, rps, color, parent_box)
         obj_to_rasterize.append(lines[0])
-    fname = 'ics_uniform_B_osc.eps'
-    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
-    reduce_eps_size(fname)
+    #fname = 'ics_uniform_B_osc.eps'
+    #rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
+    #reduce_eps_size(fname)
+    fname = 'ics_uniform_B_osc.png'
+    plt.savefig(fname, dpi=300)
     plt.show()
 
     # PLOT P_LAM FOR CONTROLLED SYSTEM
@@ -238,10 +241,11 @@ if __name__ == '__main__':
     ax.legend(loc='upper right', fontsize=16)
     ax.grid()
     plt.tight_layout()
-    #plt.subplots_adjust(top=0.96, hspace=0.3)
-    fname = 'p_lam_re_500_poster.eps'
-    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
-    reduce_eps_size(fname)
+    #fname = 'p_lam_re_500_poster.eps'
+    #rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
+    #reduce_eps_size(fname)
+    fname = 'p_lam_re_500_poster.png'
+    plt.savefig(fname, dpi=300)
     plt.show()
 
     # PLOT P_LAM FOR UNCONTROLLED SYSTEM FOR PRESENTATION
@@ -307,7 +311,9 @@ if __name__ == '__main__':
     ax.plot(Es, fitting_ctrl(Es), linewidth=2, color='black')
     ax.set_xlabel(r'$E$', fontsize=16)
     plt.tight_layout()
-    fname = 'p_lam_osc_with_fitting_poster.eps'
-    rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
-    reduce_eps_size(fname)
+    #fname = 'p_lam_osc_with_fitting_poster.eps'
+    #rasterise_and_save(fname, rasterise_list=obj_to_rasterize, fig=fig, dpi=300)
+    #reduce_eps_size(fname)
+    fname = 'p_lam_osc_with_fitting_poster.png'
+    plt.savefig(fname, dpi=300)
     plt.show()
