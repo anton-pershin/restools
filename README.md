@@ -36,7 +36,28 @@ First of all, one needs to fill the list of local roots as absolute paths where 
 | ECRAD | 2021-05-18-ecrad-reduced-precision
 | IFSMPI | 2021-07-08-ifs-reduced-precision-in-mpi-communications
 
-If you plan to interact with the cloud (e.g., download existing research tasks, upload new ones etc.), you need to [install AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). All the interaction should be done using a management script `restools/manage.py`: see [docs](/doc/manage.md) for details.
+If you plan to interact with the cloud (e.g., download existing research tasks, upload new ones etc.), you need to [install AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) and configure it. To do this, run configure command
+```bash
+aws configure
+```
+and input the following information about Access Key we provide for open access to data:
+* `AWS Access Key ID` is `ngqEjkvlOvg0IP6No116`
+* `AWS Secret Access Key` is `bTiR2L2U2eIjxtAE8XRVNqi5stWX-m-6pAsXpRwo`
+* `Default region name` is `ru-central1` 
+
+After that, you should find this key in `.aws/credentials`:
+```
+[default]
+  aws_access_key_id = ngqEjkvlOvg0IP6No116
+  aws_secret_access_key = bTiR2L2U2eIjxtAE8XRVNqi5stWX-m-6pAsXpRwo
+```
+and correct region in `.aws/config`:
+```
+[default]
+  region = ru-central1
+```
+
+All the interaction with the cloud should be done using a management script `restools/manage.py`: see [docs](/doc/manage.md) for details. 
 
 If you want to create new research, use a management script `restools/manage.py`: see [docs](/doc/manage.md) for details.
 
