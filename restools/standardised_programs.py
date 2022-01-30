@@ -148,10 +148,11 @@ class SimulateflowChannelflowV2(StandardisedIntegrator):
 
 class MoehlisModelIntegrator(StandardisedIntegrator):
     ti_class = TimeIntegrationLowDimensional
-
     def __init__(self, input_filename_key='input_filename', nohup=False):
-        chaining_command_at_start = 'nohup' if nohup else ''
-        chaining_command_at_end = '> task.out 2> task.err < /dev/null &' if nohup else ''
+        chaining_command_at_start = ''
+        chaining_command_at_end = ''
+        if nohup:
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end()
         super().__init__(name='time_integrate_moehlis.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -172,8 +173,10 @@ class EsnIntegrator(StandardisedIntegrator):
     ti_class = TimeIntegrationLowDimensional
 
     def __init__(self, input_filename_key='input_filename', nohup=False):
-        chaining_command_at_start = 'nohup' if nohup else ''
-        chaining_command_at_end = '> task.out 2> task.err < /dev/null &' if nohup else ''
+        chaining_command_at_start = ''
+        chaining_command_at_end = ''
+        if nohup:
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end()
         super().__init__(name='time_integrate_esn.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -194,8 +197,10 @@ class EsnTrainer(StandardisedIntegrator):
     ti_class = TimeIntegrationLowDimensional
 
     def __init__(self, input_filename_key='input_filename', nohup=False):
-        chaining_command_at_start = 'nohup' if nohup else ''
-        chaining_command_at_end = '> task.out 2> task.err < /dev/null &' if nohup else ''
+        chaining_command_at_start = ''
+        chaining_command_at_end = ''
+        if nohup:
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end()
         super().__init__(name='train_esn.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -228,3 +233,15 @@ class AddfieldsChannelflowV1(StandardisedProgram):
         """
         super().__init__(name='addfields',
                          trailing_args_keys=(params_key, output_filename_key,))
+
+
+def nohup_command_start_and_end():
+    if os.name == 'posix':
+        start = r'nohup'
+        end = r'> task.out 2> task.err < /dev/null &'
+    elif os.name == 'nt':
+        start = r'start'
+        end = r'> task.out 2> task.err'
+    else:
+        raise ValueError(f'Unsupported "os.name": {os.name}')
+    return start, end
