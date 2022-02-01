@@ -152,7 +152,7 @@ class MoehlisModelIntegrator(StandardisedIntegrator):
         chaining_command_at_start = ''
         chaining_command_at_end = ''
         if nohup:
-            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=False)
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True)
         super().__init__(name='time_integrate_moehlis.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -176,7 +176,7 @@ class EsnIntegrator(StandardisedIntegrator):
         chaining_command_at_start = ''
         chaining_command_at_end = ''
         if nohup:
-            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote)
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True)
         super().__init__(name='time_integrate_esn.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -200,7 +200,7 @@ class EsnTrainer(StandardisedIntegrator):
         chaining_command_at_start = ''
         chaining_command_at_end = ''
         if nohup:
-            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote)
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True)
         super().__init__(name='train_esn.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -235,13 +235,15 @@ class AddfieldsChannelflowV1(StandardisedProgram):
                          trailing_args_keys=(params_key, output_filename_key,))
 
 
-def nohup_command_start_and_end(remote=False):
+def nohup_command_start_and_end(remote=False, python=False):
     if remote or os.name == 'posix':
         start = r'nohup'
         end = r'> task.out 2> task.err < /dev/null &'
     elif os.name == 'nt':
-        start = r'start'
-        end = r'> task.out 2> task.err'
+        start = r'start cmd /c'
+        if python:
+            start += r' python'
+        end = r'^> task.out 2^> task.err'
     else:
         raise ValueError(f'Unsupported "os.name": {os.name}')
     return start, end
