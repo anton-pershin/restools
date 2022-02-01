@@ -3,6 +3,9 @@ A set of pre- and post-processing tools for computational research in transition
 
 # Getting started
 
+A set of packanges needs to be installed beforehand for restools to work properly (see requirements.txt). Known issues:
+* On Windows, h5py needs to be installed from conda, not pip
+
 To start working with restools, create your own `config_research.json`:
 ```bash
 cp pycomsdk/config_research.json.example config_research.json
