@@ -131,7 +131,14 @@ class CloudSubparser(CustomSubparser):
         subprocess.run(download_command_line, shell=True)
         extract_command_line = f'tar -zxvf {local_archive_path} --directory {res.local_research_path}'
         subprocess.run(extract_command_line, shell=True)
-        remove_archive_command_line = f'rm {local_archive_path}'
+        rm_command = None
+        if os.name == 'posix':
+            rm_command = 'rm'
+        elif os.name == 'nt':
+            rm_command = 'del'
+        else:
+            raise ValueError(f'Unknown os.name: {os.name}')
+        remove_archive_command_line = f'{rm_command} {local_archive_path}'
         subprocess.run(remove_archive_command_line, shell=True)
 
     def _upload_task_to_aws_cloud_as_archive(self, res, task):
