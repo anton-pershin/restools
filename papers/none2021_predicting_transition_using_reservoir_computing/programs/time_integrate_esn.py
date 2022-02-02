@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import _path_loader
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
@@ -12,6 +11,8 @@ from functools import partial
 
 import numpy as np
 
+from misc import upload_paths_from_config
+upload_paths_from_config()
 from pyESN import ESN
 
 

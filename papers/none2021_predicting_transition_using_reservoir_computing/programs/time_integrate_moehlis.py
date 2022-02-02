@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import _path_loader
-from misc import generate_random_perturbation
 import os
 import json
 import argparse
@@ -10,6 +8,8 @@ from functools import partial
 
 import numpy as np
 
+from misc import upload_paths_from_config, generate_random_perturbation
+upload_paths_from_config()
 from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel, \
     MoehlisFaisstEckhardtPerturbationDynamicsModel
 from reducedmodels.models import rk4_timestepping
