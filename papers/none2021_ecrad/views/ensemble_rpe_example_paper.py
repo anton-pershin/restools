@@ -7,6 +7,7 @@ import json
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import restools
 from restools.plotting import build_zooming_axes_for_plotting_with_box
@@ -37,7 +38,7 @@ class RpeEnsembleData(object):
 
 
 if __name__ == '__main__':
-    plt.style.use('resources/default.mplstyle')
+    #plt.style.use('resources/default.mplstyle')
 
 #    s = Summary(res_id='ECRAD',
 #                l137_file='/home/tony/projects/oxford/pershin/misctools/L137.csv',
@@ -88,27 +89,50 @@ if __name__ == '__main__':
     ax_rel_error = fig.add_subplot(gs[0, 2])
     ax_rel_error.semilogx(np.abs(np.array(rp_data.means) - np.array(ref_data.means)) / np.abs(np.array(ref_data.means)), indices, '--o', linewidth=1, label='Reduced precision')
     ax_rel_error.semilogx([2**(-10), 2**(-10)], [min(indices), max(indices)], 'k', linewidth=2, label='Reduced precision')
-    #ax_ens.semilogx(rp_data.means, indices, '--o', linewidth=1, label='Reduced precision')
-    #ax_ens.semilogx(ref_data.means, indices, '--o', linewidth=1, label='Reference')
-    ax_ens.errorbar(rp_data.means, indices, xerr=3*np.array(ref_data.stds), fmt='--o', capsize=2.0, elinewidth=2, capthick=2, linewidth=1, label='Half precision')
-    ax_ens.errorbar(ref_data.means, indices, xerr=3*np.array(ref_data.stds), fmt='--o', capsize=2.0, elinewidth=2, capthick=2, linewidth=1, label='Double precision')
-    #ax_ens.text(1.5*10**(-5), 3.5, 'Subnormal numbers', fontdict=dict(fontsize=12, color='#555'))
-    ax_ens.text(1.5*10**(-8), 0.5, 'Subnormal numbers', fontdict=dict(fontsize=12, color='#555'))
-    #ax_ens.set_xscale('log')
-    #ax_ens.fill_betweenx(indices, np.array(ref_data.means) - 3*np.array(ref_data.stds), np.array(ref_data.means) + 3*np.array(ref_data.stds))
+    for i, rp_mean, ref_mean, ref_std in zip(indices, rp_data.means, ref_data.means, ref_data.stds):
+        ax_ens.errorbar([10**(-16), ref_mean], [i, i], xerr=3*np.array([0, ref_std]), fmt='o--', 
+                        color='tab:blue', capsize=2.0, elinewidth=2, capthick=2, linewidth=2, markersize=8,
+                        label='Double precision' if i == 0 else None)
+        ax_ens.errorbar([10**(-16), rp_mean], [i, i], xerr=3*np.array([0, ref_std]), fmt='o--', 
+                        color='tab:orange', capsize=2.0, elinewidth=2, capthick=2, linewidth=2, markersize=8,
+                        label='Half precision' if i == 0 else None)
+    ax_ens.fill_betweenx([min(indices) - 1, max(indices) + 1], 10**(-9), x2=2**(-14), color='#ddd')
+    ax_ens.text(3*10**(-9), 0.6, 'Subnormal numbers', fontdict=dict(fontsize=12, color='#555'))
+    ax_ens.set_xscale('log')
+
+    divider = make_axes_locatable(ax_ens)
+    ax_ens_lin = divider.append_axes('right', size=2.0, pad=0)
+    for i, rp_mean, ref_mean, ref_std in zip(indices, rp_data.means, ref_data.means, ref_data.stds):
+        ax_ens_lin.errorbar([10**(-16), ref_mean], [i, i], xerr=3*np.array([0, ref_std]), fmt='o--', 
+                            color='tab:blue', capsize=2.0, elinewidth=2, capthick=2, linewidth=2, markersize=8, 
+                            label='Double precision' if i == 0 else None)
+        ax_ens_lin.errorbar([10**(-16), rp_mean], [i, i], xerr=3*np.array([0, ref_std]), fmt='o--', 
+                            color='tab:orange', capsize=2.0, elinewidth=2, capthick=2, linewidth=2, markersize=8,
+                            label='Half precision' if i == 0 else None)
+
+#    axins = build_zooming_axes_for_plotting_with_box(fig, ax_ens,
+#                                                     parent_box=[3.5*10**(-8), 4.25, 6.2*10**(-8), -0.5],
+#                                                     child_box=[10**(-8), 3.2, 8*10**(-7), -1.5],
+#                                                     parent_vertices=[1, 2],
+#                                                     child_vertices=[0, 3],
+#                                                     remove_axis=False)
+#    #axins = ax_ens.inset_axes([0.5, 0.5, 0.4, 0.2])
+#    #indices[-3] = -5*10**4
+#    #indices[-1] = 5*10**8
+#    axins.errorbar(rp_data.means, indices, xerr=3*np.array(rp_data.stds), fmt='o--', capsize=2.0, elinewidth=2, capthick=2, linewidth=1)
+#    axins.errorbar(ref_data.means, indices, xerr=3*np.array(ref_data.stds), fmt='o--', capsize=2.0, elinewidth=2, capthick=2, linewidth=1)
+#    #axins.plot(ref_data.raw_ensembles[4], [4]*len(ref_data.raw_ensembles[4]), 'ok', markersize=1, zorder=50)
+#    axins.set_xlim((5.0*10**(-8), 6.3*10**(-8)))
+#    axins.set_ylim((4.1, 3.9))
+#    axins.set_xticks([])
+#    axins.set_yticks([])
+
+
+    ax_ens.set_xlim((10**(-9), 3.))
+    ax_ens_lin.set_xlim((3., 5.1))
+
     ax_rel_error.set_yticklabels([])
     ax_ens.set_yticks(indices)
-#    ax_ens.set_yticklabels([
-#        '1   x(1) = 3.6',
-#        '2   x(2) = 4.9',
-#        '3   m(1) = 5.3e-4',
-#        '4   m(2) = 6.3e-4',
-#        '5   call perturb_ensemble(m)',
-#        '...',
-#        '6   m = m / 10000.0',
-#        '...',
-#        '7   com = (m(1)*x(1) + m(2)*x(2)) /&\n              &(m(1) + m(2))',
-#    ], fontsize=8, usetex=False)
     ax_ens.set_yticklabels([
         '1   x(1) = 3.6',
         '2   x(2) = 4.9',
@@ -118,44 +142,56 @@ if __name__ == '__main__':
         '6   com = (m(1)*x(1) + m(2)*x(2)) /&\n              &(m(1) + m(2))',
     ], fontsize=8, usetex=False)
     ax_ens.set_xlabel('Assignment values', fontsize=12, usetex=False)
-    ax_ens.fill_betweenx([min(indices) - 1, max(indices) + 1], 10**(-9), x2=2**(-14), color='#ddd')
-    #ax_ens.set_xlim((4*10**(-9), 10**(2)))
-    ax_ens.legend(loc='center right')
+    ax_ens_lin.legend(loc='center right')
     ax_rel_error.set_xlabel('Relative error per assignment', fontsize=12, usetex=False)
-    for ax in (ax_ens, ax_rel_error):
+    for ax in (ax_ens, ax_ens_lin, ax_rel_error):
         ax.grid()
         ax.set_ylim((indices[-1] + 0.5, indices[0] - 0.5))
     for label in ax_ens.get_yticklabels():
         label.set_horizontalalignment('left')
+    ax_ens_lin.spines['left'].set_visible(False)  # removes bottom axis line
+    ax_ens_lin.tick_params(
+        axis='y',          # changes apply to the x-axis
+        which='both',      # both major and minor ticks are affected
+        left=False,      # ticks along the bottom edge are off
+        right=False,         # ticks along the top edge are off
+        labelbottom=False)
+    ax_ens_lin.set_yticklabels([])
+
     ax_ens.tick_params(axis='y', which='major', pad=160)
     ax_rel_error.set_xticks([10**(-5), 10**(-4), 10**(-3), 10**(-2), 10**(-1)])
     plt.tight_layout(rect=[0.0, 0.0, 1.0, 1.0])
-
-    axins = build_zooming_axes_for_plotting_with_box(fig, ax_ens,
-                                                     #parent_box=[3.5*10**(-8), 7.25, 6.2*10**(-8), -1.5],
-                                                     #child_box=[10**(-8), 4.6, 8*10**(-7), -1.5],
-                                                     parent_box=[3.5*10**(-8), 4.25, 6.2*10**(-8), -0.5],
-                                                     child_box=[10**(-8), 3.2, 8*10**(-7), -1.5],
-                                                     parent_vertices=[1, 2],
-                                                     child_vertices=[0, 3],
-                                                     remove_axis=False)
-    #axins = ax_ens.inset_axes([0.5, 0.5, 0.4, 0.2])
-    indices[-3] = -5*10**4
-    indices[-1] = 5*10**8
-    axins.errorbar(rp_data.means, indices, xerr=3*np.array(rp_data.stds), fmt='o--', capsize=2.0, elinewidth=2, capthick=2, linewidth=1)
-    axins.errorbar(ref_data.means, indices, xerr=3*np.array(ref_data.stds), fmt='o--', capsize=2.0, elinewidth=2, capthick=2, linewidth=1)
-    #axins.plot(ref_data.raw_ensembles[4], [4]*len(ref_data.raw_ensembles[4]), 'ok', markersize=1, zorder=50)
-    axins.set_xlim((5.0*10**(-8), 6.3*10**(-8)))
-    axins.set_ylim((4.1, 3.9))
-    axins.set_xticks([])
-    axins.set_yticks([])
-
-    #x1, x2, y1, y2 = 4*10**(-8), 7*10**(-8), 5.5, 7.5
-    #axins.set_xlim(x1, x2)
-    #axins.set_ylim(y1, y2)
-    #axins.set_xticklabels('')
-    #axins.set_yticklabels('')
-    #ax_ens.indicate_inset_zoom(axins, edgecolor="black")
-
     plt.savefig(f'ensemble_rpe_example.eps', dpi=200)
     plt.show()
+
+
+
+
+def plot_data_on_mixed_linear_log_scale(fig, ax, x_data_list, y_data_list, label_list, ylabel='Pressure (hPa)',
+                                        xscale='log', ylim_linear=(1000, 101), ylim_log=(101, 0.007), 
+                                        ylabel_shirt=-0.02, **kwargs):
+    for x_data, y_data, label in zip(x_data_list, y_data_list, label_list):
+        ax.plot(x_data, y_data, linewidth=2, label=label, **kwargs)
+    ax.grid()
+    ax.set_ylim(ylim_linear)
+    ax.set_xscale(xscale)
+    ax.spines['top'].set_visible(False)
+    ax.xaxis.set_ticks_position('bottom')
+    divider = make_axes_locatable(ax)
+    ax_log = divider.append_axes("top", size=2.0, pad=0, sharex=ax)
+    for x_data, y_data, label in zip(x_data_list, y_data_list, label_list):
+        ax_log.plot(x_data, y_data, linewidth=2, label=label, **kwargs)
+    ax_log.set_yscale('log')
+    ax_log.set_ylim(ylim_log)
+    ax_log.grid()
+#    ax_log.legend()
+    ax_log.spines['bottom'].set_visible(False)  # removes bottom axis line
+    #ax_log.xaxis.set_ticks_position('top')
+    ax_log.tick_params(
+        axis='x',          # changes apply to the x-axis
+        which='both',      # both major and minor ticks are affected
+        bottom=False,      # ticks along the bottom edge are off
+        top=False,         # ticks along the top edge are off
+        labelbottom=False)
+    fig.text(ylabel_shirt, 0.55, ylabel, va='center', rotation='vertical', fontsize=16)
+    return ax, ax_log

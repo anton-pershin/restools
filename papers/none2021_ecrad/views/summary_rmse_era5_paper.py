@@ -77,26 +77,27 @@ if __name__ == '__main__':
             ifs_io = IfsIO([os.path.join(task_path, 'hgom', ecrad_runs[run_i], 'sh', f'{id_}.nc') for id_ in step_shifts],
                            [os.path.join(task_path, 'hgom', ecrad_runs[run_i], 'gg', f'{id_}.nc') for id_ in step_shifts],
                             l91_file=summary.l91_file)
-            vals = []
+            vals_in_percent = []
             days = []
             for ts_i in range(n_timesteps):
+                time = ifs_io.times()[ts_i]
                 ifs_era5_data_ref = ifs_era5_data_with_t2m if quantity_info[q_i]['quantity'] == 'temperature_at_2m' else ifs_era5_data
-                ref_rmse = get_ifs_rmse(ifs_era5_data_ref, ifs_io_ref, ts_i, ecrad_runs[run_i], quantity=quantity_info[q_i]['quantity'], 
+                ref_rmse = get_ifs_rmse(ifs_era5_data_ref, ifs_io_ref, time, ecrad_runs[run_i], quantity=quantity_info[q_i]['quantity'], 
                                         pressure=quantity_info[q_i]['pressure'])
-                rmse = get_ifs_rmse(ifs_era5_data_ref, ifs_io, ts_i, ecrad_runs[run_i], quantity=quantity_info[q_i]['quantity'], 
+                rmse = get_ifs_rmse(ifs_era5_data_ref, ifs_io, time, ecrad_runs[run_i], quantity=quantity_info[q_i]['quantity'], 
                                     pressure=quantity_info[q_i]['pressure'])
                 rel_rmse_deviation = (rmse.data.item() - ref_rmse.data.item()) / ref_rmse.data.item()
-                vals.append(rel_rmse_deviation)
+                vals_in_percent.append(rel_rmse_deviation * 100)
                 days.append(ifs_io.time_shift(ts_i).days)
-            axes[q_i].plot(days, vals, 'o--', label=ecrad_run_labels[run_i], 
+            axes[q_i].plot(days, vals_in_percent, 'o--', label=ecrad_run_labels[run_i], 
                            linewidth=2 if ecrad_runs[run_i] == 'ecrad_tripleclouds_23bits' else 3)
         axes[q_i].set_xticks([0, 2, 4, 6, 8, 10])
         axes[q_i].set_xlabel('Forecast day', fontsize=16)
         axes[q_i].set_title(quantity_info[q_i]['title'], fontsize=16)
-        axes[q_i].set_ylim((-0.05, 0.05))
+        axes[q_i].set_ylim((-5, 5))
         axes[q_i].grid()
         axes[q_i].legend()
-    axes[0].set_ylabel('Relative error', fontsize=16)
+    axes[0].set_ylabel(r'Change in RMS error (\%)', fontsize=16)
     plt.tight_layout()
     plt.savefig(f'summary_rmse_era5.eps', dpi=200)
     plt.show()

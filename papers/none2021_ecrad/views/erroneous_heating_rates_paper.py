@@ -74,7 +74,7 @@ if __name__ == '__main__':
 #        ax.set_title('Shortwave heating rate' if i == 0 else '')
 #        ax.set_ylabel('')
     #    ax.set_ylim((-10, 30))
-    ax.set_xlabel('Shortwave heating rate')
+    ax.set_xlabel(r'Shortwave heating rate (K $\times$ d$^{-1}$)')
     #ax.grid()
     ax_log.legend(loc='upper left', fontsize=16)
     plt.tight_layout(rect=[0.03, 0, 1, 1])

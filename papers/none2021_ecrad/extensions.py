@@ -185,8 +185,8 @@ class IfsIO:
     def __len__(self):
         return len(self.time_series_sh_datasets)
 
-    def times(self) -> Sequence[float]:
-        return [float(ds['time'][0]) for ds in self.time_series_sh_datasets]
+    def times(self) -> Sequence[int]:
+        return [int(ds['time'][0]) for ds in self.time_series_sh_datasets]
 
     def time_shift(self, time_step_i) -> timedelta:
         initial_ds = self.time_series_sh_datasets[0]
@@ -272,7 +272,8 @@ class IfsIO:
 
 
 class ERA5Data:
-    def __init__(self, timed_nc_file: str, any_ref_nc_file_containing_same_lat_and_lon=None, ref_lat_lon_naming='long'):
+    def __init__(self, timed_nc_file: str, any_ref_nc_file_containing_same_lat_and_lon=None, ref_lat_lon_naming='long',
+                 shift_time_to_zero=True):
         self.nc_dataset = netCDF4.Dataset(timed_nc_file, 'r', format='NETCDF4')
         self.n_time_steps = len(self.nc_dataset['time'])
         if any_ref_nc_file_containing_same_lat_and_lon is not None:
@@ -280,6 +281,7 @@ class ERA5Data:
         else:
             self.any_ref_nc_dataset_containing_same_lat_and_lon = None
         self.ref_lat_lon_naming = ref_lat_lon_naming
+        self.shift_time_to_zero = shift_time_to_zero
 
 #        self.n_time_steps = len(time_series_sh_files)
 #        self.time_series_sh_datasets = [netCDF4.Dataset(filename, 'r', format='NETCDF4')
@@ -304,8 +306,11 @@ class ERA5Data:
     def __len__(self):
         return len(self.n_time_steps)
 
-    def times(self) -> Sequence[float]:
-        return np.array(self.nc_dataset['time'])
+    def times(self) -> Sequence[int]:
+        times = np.array(self.nc_dataset['time'])
+        if self.shift_time_to_zero:
+            times -= self.nc_dataset['time'][0]
+        return list(times)
 
     def time_shift(self, time_step_i) -> timedelta:
         initial_datetime = cf_units.num2date(float(self.nc_dataset['time'][0]), 'hours since 1970-01-01 00:00:00', cf_units.CALENDAR_STANDARD)
@@ -313,12 +318,12 @@ class ERA5Data:
         return current_datetime - initial_datetime
 
     def temperature(self, time_step_i):
-        return self._ifs_var_as_iris_cube('t', 'air_temperature')
+        return self._ifs_var_as_iris_cube('t', 'air_temperature', time_step_i)
 
     def temperature_at_2m(self, time_step_i):
-        return self._ifs_var_as_iris_cube('t2m', 'air_temperature')
+        return self._ifs_var_as_iris_cube('t2m', 'air_temperature', time_step_i)
 
-    def _ifs_var_as_iris_cube(self, var, standard_name):
+    def _ifs_var_as_iris_cube(self, var, standard_name, time_step_i):
         dim_coords_and_dims = []
         #standard_name = 'air_temperature'
         units = None
@@ -344,6 +349,8 @@ class ERA5Data:
                                             len(dim_coords_and_dims)))
             elif dim_name == 'time':
                 time = float(self.nc_dataset['time'][time_step_i])
+                if self.shift_time_to_zero:
+                    time -= float(self.nc_dataset['time'][0])
             else:
                 raise ValueError(f'Unknown dimension: {dim_name}')
         var_as_np_array = np.array(self.nc_dataset[var])[time_step_i, ...]
@@ -752,14 +759,16 @@ def get_ifs_abs_rel_diff(ifs_io, ifs_io_rp, ts_i, dir_, quantity='geopotential',
     return rel_diff
 
 
-def get_ifs_rmse(ifs_io, ifs_io_rp, ts_i, dir_, quantity='geopotential', pressure=500.):
+def get_ifs_rmse(ifs_io, ifs_io_rp, time, dir_, quantity='geopotential', pressure=500.):
+    ts_i = ifs_io.times().index(time)
+    ts_rp_i = ifs_io_rp.times().index(time)
     if pressure is None:
         q = getattr(ifs_io, quantity)(ts_i)
-        q_rp = getattr(ifs_io_rp, quantity)(ts_i)
+        q_rp = getattr(ifs_io_rp, quantity)(ts_rp_i)
     q = extract_or_interpolate(getattr(ifs_io, quantity)(ts_i), pressure)
-    q_rp = extract_or_interpolate(getattr(ifs_io_rp, quantity)(ts_i), pressure)
+    q_rp = extract_or_interpolate(getattr(ifs_io_rp, quantity)(ts_rp_i), pressure)
     diff = q - q_rp
     rmse = diff.collapsed(['latitude', 'longitude'], iris.analysis.RMS)
-    print(f'Dir: {dir_}, time shift: +{ifs_io.time_shift(ts_i)}, RMSE: {rmse.data}, RMS-averaged original value: {q.collapsed(["latitude", "longitude"], iris.analysis.RMS).data}')
+    print(f'Dir: {dir_}, time shift: +{time}, RMSE: {rmse.data}, RMS-averaged original value: {q.collapsed(["latitude", "longitude"], iris.analysis.RMS).data}')
     return rmse
 
