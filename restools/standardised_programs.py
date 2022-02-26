@@ -12,7 +12,7 @@ import comsdk.comaux as comaux
 
 class StandardisedProgram:
     def __init__(self, name: str, keyword_names=(), trailing_args_keys=(),
-                 chaining_command_at_start='', chaining_command_at_end=''):
+                 chaining_command_at_start=lambda d: '', chaining_command_at_end=lambda d: ''):
         self.name = name
         self.keyword_names = keyword_names
         self.trailing_args_keys = trailing_args_keys
@@ -22,7 +22,7 @@ class StandardisedProgram:
 
 class StandardisedIntegrator(StandardisedProgram, ABC):
     def __init__(self, name: str, keyword_names=(), trailing_args_keys=(),
-                 chaining_command_at_start='', chaining_command_at_end=''):
+                 chaining_command_at_start=lambda d: '', chaining_command_at_end=lambda d: ''):
         StandardisedProgram.__init__(self, name, keyword_names=keyword_names, trailing_args_keys=trailing_args_keys,
                                      chaining_command_at_start=chaining_command_at_start,
                                      chaining_command_at_end=chaining_command_at_end)
@@ -148,11 +148,11 @@ class SimulateflowChannelflowV2(StandardisedIntegrator):
 
 class MoehlisModelIntegrator(StandardisedIntegrator):
     ti_class = TimeIntegrationLowDimensional
-    def __init__(self, input_filename_key='input_filename', nohup=False, remote=False):
-        chaining_command_at_start = ''
-        chaining_command_at_end = ''
+    def __init__(self, input_filename_key='input_filename', nohup=False, remote=False, pipes_index_key=None):
+        chaining_command_at_start = lambda d: ''
+        chaining_command_at_end = lambda d: ''
         if nohup:
-            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True)
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True, pipes_index_key=pipes_index_key)
         super().__init__(name='time_integrate_moehlis.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -169,14 +169,28 @@ class MoehlisModelIntegrator(StandardisedIntegrator):
         pass
 
 
+class SimplePythonProgram(StandardisedProgram):
+    def __init__(self, program_name, input_filename_key='input_filename', nohup=False, remote=False, pipes_index_key=None):
+        chaining_command_at_start = lambda d: ''
+        chaining_command_at_end = lambda d: ''
+        if nohup:
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True, pipes_index_key=pipes_index_key)
+        super().__init__(name=program_name,
+                         keyword_names=('cores',),
+                         trailing_args_keys=(input_filename_key,),
+                         chaining_command_at_start=chaining_command_at_start,
+                         chaining_command_at_end=chaining_command_at_end
+                         )
+
+
 class EsnIntegrator(StandardisedIntegrator):
     ti_class = TimeIntegrationLowDimensional
 
-    def __init__(self, input_filename_key='input_filename', nohup=False, remote=False):
-        chaining_command_at_start = ''
-        chaining_command_at_end = ''
+    def __init__(self, input_filename_key='input_filename', nohup=False, remote=False, pipes_index_key=None):
+        chaining_command_at_start = lambda d: ''
+        chaining_command_at_end = lambda d: ''
         if nohup:
-            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True)
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True, pipes_index_key=pipes_index_key)
         super().__init__(name='time_integrate_esn.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -196,11 +210,11 @@ class EsnIntegrator(StandardisedIntegrator):
 class EsnTrainer(StandardisedIntegrator):
     ti_class = TimeIntegrationLowDimensional
 
-    def __init__(self, input_filename_key='input_filename', nohup=False, remote=False):
-        chaining_command_at_start = ''
-        chaining_command_at_end = ''
+    def __init__(self, input_filename_key='input_filename', nohup=False, remote=False, pipes_index_key=None):
+        chaining_command_at_start = lambda d: ''
+        chaining_command_at_end = lambda d: ''
         if nohup:
-            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True)
+            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True, pipes_index_key=pipes_index_key)
         super().__init__(name='train_esn.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -235,15 +249,15 @@ class AddfieldsChannelflowV1(StandardisedProgram):
                          trailing_args_keys=(params_key, output_filename_key,))
 
 
-def nohup_command_start_and_end(remote=False, python=False):
+def nohup_command_start_and_end(remote=False, python=False, pipes_index_key=None):
     if remote or os.name == 'posix':
-        start = r'nohup'
-        end = r'> task.out 2> task.err < /dev/null &'
+        start = lambda d: r'nohup'
+        end = lambda d: r'> task.out 2> task.err < /dev/null &' if pipes_index_key is None else r'> task_' + str(d[pipes_index_key]) + r'.out 2> task_' + str(d[pipes_index_key]) + r'.err < /dev/null &'
     elif os.name == 'nt':
-        start = r'start cmd /c'
+        start = lambda d: r'start cmd /c'
         if python:
-            start += r' python'
-        end = r'^> task.out 2^> task.err'
+            start += lambda d: r' python'
+        end = lambda d: r'^> task.out 2^> task.err' if pipes_index_key is None else r'^> task_' + str(d[pipes_index_key]) + r'.out 2^> task_' + str(d[pipes_index_key]) + r'.err'
     else:
         raise ValueError(f'Unsupported "os.name": {os.name}')
     return start, end
