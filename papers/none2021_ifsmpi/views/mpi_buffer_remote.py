@@ -16,9 +16,9 @@ from comsdk.edge import Edge, InOutMapping, UploadOnRemoteEdge, DownloadFromRemo
 
 class RemotePlottingGraph(Graph):
     def __init__(self, local_comm, remote_comm, plotting_prog, input_filename,
-                 output_filenames_key='output_filenames'):
+                 output_paths_key='output_paths'):
         p_start, p_end = RemotePlottingGraph.create_branch(local_comm, remote_comm, plotting_prog,
-                                                           output_filenames_key=output_filenames_key)
+                                                           output_paths_key=output_paths_key)
         
         def set_up_working_dir(d):
             d['__REMOTE_WORKING_DIR__'] = remote_comm.host.programs[plotting_prog.name]
@@ -34,9 +34,8 @@ class RemotePlottingGraph(Graph):
     @staticmethod
     def create_branch(local_comm, remote_comm, plotting_prog: StandardisedProgram,
                       relative_keys=(), keys_mapping={}, array_keys_mapping=None,
-                      init_field_at_remote_key=None, output_filenames_key='figure_filename'):
+                      init_field_at_remote_key=None, output_paths_key='output_paths'):
         def task_finished(d):
-            time.sleep(2)
             return '__finished__' in remote_comm.listdir(d['__REMOTE_WORKING_DIR__'])
 
         task_finished_predicate = Func(func=task_finished)
@@ -50,7 +49,7 @@ class RemotePlottingGraph(Graph):
         download_edge = DownloadFromRemoteEdge(remote_comm,
                                                predicate=task_finished_predicate,
                                                io_mapping=io_mapping,
-                                               remote_paths_keys=(output_filenames_key,),
+                                               remote_paths_keys=(output_paths_key,),
                                                update_paths=False)
         s_ready = State('READY_FOR_PLOTTING', array_keys_mapping=array_keys_mapping)
         s_uploaded_input_files = State('UPLOADED_INPUT_FILES')
@@ -70,18 +69,21 @@ if __name__ == '__main__':
     data = {
     #    'res': res,
         'input_filename': 'inputs.json',
-        'figure_filename': 'plot.eps',
+        #'figure_dir': 'plots_hgom_255',
+        #'path_to_buffers': '/network/aopp/chaos/pred/pershin/oifs/oifsruns/test_mpi_dumper/buffer_dumps',
+        #'figure_dir': 'plots_xaver_255',
+        #'path_to_buffers': '/network/aopp/chaos/pred/pershin/oifs/oifsruns/test_xaver/buffer_dumps',
+        'figure_dir': 'plots_xaver_639',
+        'path_to_buffers': '/network/aopp/chaos/pred/pershin/oifs/oifsruns/test_xaver_639/buffer_dumps',
         'description': f'Test res plotting.',
-        'index': 42,
     }
 
     graph = RemotePlottingGraph(local_comm, ssh_comm,
                                 SimplePythonProgram(program_name='plot_mpi_buffer.py',
                                                     input_filename_key='input_filename',
-                                                    nohup=True,
-                                                    pipes_index_key='index'),
+                                                    nohup=True),
                                 input_filename=data['input_filename'],
-                                output_filenames_key='figure_filename')
+                                output_paths_key='figure_dir')
     okay = graph.run(data)
     if not okay:
         print(data['__EXCEPTION__'])
