@@ -7,7 +7,7 @@ import numpy as np
 
 from restools.standardised_programs import StandardisedProgramEdge, MoehlisModelIntegrator, EsnIntegrator, EsnTrainer
 from restools.timeintegration import TimeIntegrationLowDimensional
-from papers.none2021_predicting_transition_using_reservoir_computing.extensions import RemotePythonTimeIntegrationGraph
+from papers.none2021_predicting_transition_using_reservoir_computing.extensions import RemotePythonTimeIntegrationGraph, LocalPythonTimeIntegrationGraph
 from comsdk.communication import LocalCommunication, SshCommunication
 from comsdk.research import Research, CreateTaskGraph
 from comsdk.graph import Graph, State, Func
@@ -23,8 +23,9 @@ def generate_random_ic_for_lifetime_distr():
 
 if __name__ == '__main__':
     local_comm = LocalCommunication.create_from_config()
-    ssh_comm = SshCommunication.create_from_config('atmlxint2')
-    res = Research.open('RC_MOEHLIS', ssh_comm)
+#    ssh_comm = SshCommunication.create_from_config('atmlxint2')
+#    res = Research.open('RC_MOEHLIS', ssh_comm)
+    res = Research.open('RC_MOEHLIS')
     re = 275
     l_x = 1.75
     l_z = 1.2
@@ -37,8 +38,12 @@ if __name__ == '__main__':
             'l_z': l_z,
         },
         're': re,
-        'training_timeseries_path': os.path.join(res.remote_research_path, f'training_timeseries_re_{re}_new_pert'),
-        'test_timeseries_path': os.path.join(res.remote_research_path, f'test_timeseries_re_{re}_pert'),
+        'final_time': 0,
+        'initial_conditions': [],
+ #       'training_timeseries_path': os.path.join(res.remote_research_path, f'training_timeseries_re_{re}_new_pert'),
+ #       'test_timeseries_path': os.path.join(res.remote_research_path, f'test_timeseries_re_{re}_pert'),
+        'training_timeseries_path': os.path.join(res.local_research_path, f'training_timeseries_re_{re}_new_pert.pickle'),
+        'test_timeseries_path': os.path.join(res.local_research_path, f'test_timeseries_re_{re}_pert.pickle'),
         'synchronization_len': 10,
         'test_chunk_timeseries_len': 300,
         'spectral_radius_values': [0.5],
@@ -48,11 +53,18 @@ if __name__ == '__main__':
         'description': f'Training ESN for Re = {re}.',
     }
 
-    graph = RemotePythonTimeIntegrationGraph(res, local_comm, ssh_comm,
-                                             EsnTrainer(input_filename_key='input_filename', nohup=True),
-                                             input_filename=data['input_filename'],
-                                             output_filenames_key='optimal_esn_filename',
-                                             task_prefix='ESNTrainingPert')
+#    graph = RemotePythonTimeIntegrationGraph(res, local_comm, ssh_comm,
+#                                             EsnTrainer(input_filename_key='input_filename', nohup=True),
+#                                             input_filename=data['input_filename'],
+#                                             output_filenames_key='optimal_esn_filename',
+#                                             task_prefix='ESNTrainingPert')
+
+    graph = LocalPythonTimeIntegrationGraph(res, local_comm,
+                                            EsnTrainer(input_filename_key='input_filename', nohup=True),
+                                            input_filename=data['input_filename'],
+                                         #   output_filenames_key='optimal_esn_filename',
+                                            task_prefix='ESNTrainingPert')
+    
     okay = graph.run(data)
     if not okay:
         print(data['__EXCEPTION__'])

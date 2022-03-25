@@ -33,6 +33,12 @@ if __name__ == '__main__':
     os.environ["MKL_NUM_THREADS"] = str(args.cores)
     os.environ["NUMEXPR_NUM_THREADS"] = str(args.cores)
 
+    if not 'started' in inputs:
+        started_file = open('__started__', 'w')
+    else:
+        started_file = open(f"i_{inputs['started']}_i", 'w')
+    started_file.close()
+
     with open(inputs['esn_path'], 'rb') as f:
         esn = pickle.load(f)
         esn.enable_noise_while_predicting = True
@@ -54,5 +60,8 @@ if __name__ == '__main__':
                 'time': np.linspace(0, inputs['dt_as_defined_by_esn'] * inputs['n_steps'], inputs['n_steps']),
             }
             pickle.dump(output_data, f)
-    finished_file = open('__finished__', 'w')
+    if not 'finished' in inputs:
+        finished_file = open('__finished__', 'w')
+    else:
+        finished_file = open(f"i_{inputs['finished']}_i", 'w')
     finished_file.close()

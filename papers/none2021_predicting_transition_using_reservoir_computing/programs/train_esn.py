@@ -23,6 +23,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     with open(args.filename, 'r') as f:
         inputs = json.load(f)
+
+    if not 'started' in inputs:
+        started_file = open('__started__', 'w')
+    else:
+        started_file = open(inputs['started'], 'w')
+    started_file.close()
+
     os.environ["OMP_NUM_THREADS"] = str(args.cores)
     os.environ["MKL_NUM_THREADS"] = str(args.cores)
     os.environ["NUMEXPR_NUM_THREADS"] = str(args.cores)
@@ -40,7 +47,11 @@ if __name__ == '__main__':
                       spectral_radius_values=inputs['spectral_radius_values'],
                       sparsity_values=inputs['sparsity_values'],
                       n_reservoir=inputs['reservoir_dimension'])
+    print(inputs['optimal_esn_filename'])
     with open(inputs['optimal_esn_filename'], 'wb') as f:
         pickle.dump(esn, f)
-    finished_file = open('__finished__', 'w')
+    if not 'finished' in inputs:
+        finished_file = open('__finished__', 'w')
+    else:
+        finished_file = open(inputs['finished'], 'w')
     finished_file.close()

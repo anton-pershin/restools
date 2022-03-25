@@ -99,12 +99,15 @@ class LocalPythonTimeIntegrationGraph(Graph):
         super().__init__(task_start, ti_term)
 
     @staticmethod
-    def create_branch(comm, integrator, relative_keys=(), keys_mapping={}, array_keys_mapping=None):
+    def create_branch(comm, integrator, relative_keys=(), keys_mapping={}, array_keys_mapping=None, edge_need=False):
         s_init = State('READY_FOR_PYTHON_TIMEINTEGRATION', array_keys_mapping=array_keys_mapping)
         s_term = State('PYTHON_TIMEINTEGRATION_FINISHED')
         integrate_edge = StandardisedProgramEdge(integrator,
                                                  comm, relative_keys=relative_keys, keys_mapping=keys_mapping)
         s_init.connect_to(s_term, edge=integrate_edge)
+        #!!!
+        if (edge_need):
+            return s_init, s_term, integrate_edge
         return s_init, s_term
 
 

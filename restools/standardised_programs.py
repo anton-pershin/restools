@@ -254,9 +254,10 @@ def nohup_command_start_and_end(remote=False, python=False, pipes_index_key=None
         start = lambda d: r'nohup'
         end = lambda d: r'> task.out 2> task.err < /dev/null &' if pipes_index_key is None else r'> task_' + str(d[pipes_index_key]) + r'.out 2> task_' + str(d[pipes_index_key]) + r'.err < /dev/null &'
     elif os.name == 'nt':
-        start = lambda d: r'start cmd /c'
         if python:
-            start += lambda d: r' python'
+            start = lambda d: r'start cmd /c python'
+        else:
+            start = lambda d: r'start cmd /c'
         end = lambda d: r'^> task.out 2^> task.err' if pipes_index_key is None else r'^> task_' + str(d[pipes_index_key]) + r'.out 2^> task_' + str(d[pipes_index_key]) + r'.err'
     else:
         raise ValueError(f'Unsupported "os.name": {os.name}')

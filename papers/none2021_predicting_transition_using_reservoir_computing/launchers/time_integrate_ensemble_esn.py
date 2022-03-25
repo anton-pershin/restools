@@ -39,8 +39,8 @@ if __name__ == '__main__':
     n_steps = 20000
     data = {
         'res': res,
-        'esn_path': os.path.join(res.local_research_path, esn_name),
-#        'esn_path': os.path.join(res.get_task_path(80), esn_name),
+#        'esn_path': os.path.join(res.local_research_path, esn_name),
+        'esn_path': os.path.join(res.get_task_path(80), esn_name),
 #        'esn_path': os.path.join(res.remote_research_path, esn_name),
         'dt_as_defined_by_esn': 1,
         'n_steps': n_steps,
