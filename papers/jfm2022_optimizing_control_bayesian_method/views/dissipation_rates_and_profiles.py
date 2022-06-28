@@ -9,8 +9,8 @@ from restools.timeintegration_builders import get_ti_builder
 from restools.flow_stats import Ensemble, BadEnsemble
 from restools.laminar_flows import PlaneCouetteFlow, PlaneCouetteFlowWithInPhaseSpanwiseOscillations
 from restools.plotting import label_axes
-from papers.jfm2020_nonlinear_robustness.data import Summary
-from papers.jfm2020_nonlinear_robustness.extensions import turbulent_dissipation_rate
+from papers.jfm2022_optimizing_control_bayesian_method.data import Summary
+from papers.jfm2022_optimizing_control_bayesian_method.extensions import turbulent_dissipation_rate
 from comsdk.research import Research
 from comsdk.comaux import load_from_json
 from thequickmath.differentiation.finite_differences import fd

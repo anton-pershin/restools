@@ -22,7 +22,7 @@ if __name__ == '__main__':
     y_stokes = np.linspace(-1., 0., 300)
     pcf_wall_osc = PlaneCouetteFlowWithInPhaseSpanwiseOscillations(re, A, omega, t, y)
     stokes_bl = StokesBoundaryLayer(re, A, omega, t, y_stokes + 1.)
-    fig, axes = plt.subplots(1, 4, figsize=(12, 3.5))
+    fig, axes = plt.subplots(1, 4, figsize=(12, 4))
     for i, ax in enumerate(axes):
         ax.plot(pcf_wall_osc.solution.w[i, :], y)
         ax.plot(stokes_bl.solution.w[i, :], y_stokes, '--', linewidth=2)
@@ -31,6 +31,7 @@ if __name__ == '__main__':
         ax.set_xlim((-0.33, 0.33))
         ax.set_ylim((-1.1, 1.1))
         ax.set_xticks([-A, 0., A])
+        ax.set_xlabel(r'$W(y, t)$')
         if i == 0:
             ttl = ax.set_title(r'$t = 0$')
             ax.set_ylabel(r'$y$')

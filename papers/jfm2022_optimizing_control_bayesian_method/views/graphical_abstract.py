@@ -11,7 +11,7 @@ import matplotlib.gridspec as gridspec
 from restools.timeintegration_builders import get_ti_builder
 from restools.flow_stats import Ensemble, BadEnsemble
 from restools.plotting import label_axes, cell_heatmap, rasterise_and_save, reduce_eps_size
-from papers.jfm2020_nonlinear_robustness.data import Summary
+from papers.jfm2022_optimizing_control_bayesian_method.data import Summary
 from comsdk.research import Research
 from comsdk.comaux import load_from_json
 from thequickmath.misc import index_for_almost_exact_coincidence

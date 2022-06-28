@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 
 from restools.laminarisation_probability import make_bayesian_estimation
 from restools.plotting import label_axes, rasterise_and_save, reduce_eps_size
-from papers.jfm2020_nonlinear_robustness.data import Summary
-from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary, \
+from papers.jfm2022_optimizing_control_bayesian_method.data import Summary
+from papers.jfm2022_optimizing_control_bayesian_method.extensions import DistributionSummary, \
     find_lam_event_number_by_random_sampling, plot_distribution_summary
 from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbProto
 from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM

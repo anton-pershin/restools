@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from restools.timeintegration_builders import get_ti_builder
 from restools.plotting import label_axes
 from restools.laminarisation_probability import LaminarisationStudy, LaminarisationProbabilityEstimation
-from papers.jfm2020_nonlinear_robustness.data import Summary
-from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary, exponential_noise_distribution
+from papers.jfm2022_optimizing_control_bayesian_method.data import Summary
+from papers.jfm2022_optimizing_control_bayesian_method.extensions import DistributionSummary, exponential_noise_distribution
 from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbProto
 from papers.jfm2020_probabilistic_protocol.extensions import RandomPerturbationFilenameJFM2020, \
     DataDirectoryJFM2020AProbabilisticProtocol, LaminarisationProbabilityFittingFunction2020JFM

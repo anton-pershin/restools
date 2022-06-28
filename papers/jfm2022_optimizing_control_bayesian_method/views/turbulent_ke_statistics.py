@@ -10,8 +10,8 @@ import matplotlib.gridspec as gridspec
 from restools.timeintegration_builders import get_ti_builder
 from restools.flow_stats import Ensemble, BadEnsemble
 from restools.plotting import label_axes
-from papers.jfm2020_nonlinear_robustness.data import Summary
-from papers.jfm2020_nonlinear_robustness.extensions import DistributionSummary
+from papers.jfm2022_optimizing_control_bayesian_method.data import Summary
+from papers.jfm2022_optimizing_control_bayesian_method.extensions import DistributionSummary
 from comsdk.research import Research
 from comsdk.comaux import load_from_json
 
@@ -24,10 +24,10 @@ def _plot_ke_distribution(ax, freqs, obj_to_rasterize: List[Any], color, distr_s
         indices = slice(last_i_with_none + 1, next_i_with_none)
         ax.plot(freqs[indices], distr_summary.means[indices], linewidth=3, color=color)
         obj = ax.fill_between(freqs[indices], distr_summary.lower_quartiles[indices],
-                              distr_summary.upper_quartiles[indices], color=color, alpha=0.5)
+                              distr_summary.upper_quartiles[indices], color=color, alpha=0.5, zorder=-10)
         obj_to_rasterize.append(obj)
         obj = ax.fill_between(freqs[indices], distr_summary.lower_deciles[indices],
-                              distr_summary.upper_deciles[indices], color=color, alpha=0.2)
+                              distr_summary.upper_deciles[indices], color=color, alpha=0.2, zorder=-10)
         obj_to_rasterize.append(obj)
         last_i_with_none = next_i_with_none
 
@@ -67,9 +67,9 @@ def _plot_edge_and_turb_ke_statistics(ax, omega, task, ti_builder, turb_ke_distr
                                                                                 turb_ke_distr,
                                                                                 max_ke_eps=0.02)
     if block_minima is not None:
-        ax.plot([omega]*len(block_minima), block_minima, 'o', color='blue', markersize=4, alpha=0.5)
+        ax.plot([omega]*len(block_minima), block_minima, 'o', color='blue', markersize=4, alpha=0.5, zorder=-10)
     if block_maxima is not None:
-        ax.plot([omega]*len(block_maxima), block_maxima, 'o', color='red', markersize=4, alpha=0.5)
+        ax.plot([omega]*len(block_maxima), block_maxima, 'o', color='red', markersize=4, alpha=0.5, zorder=-10)
 
     # second, collect statistics for edge states
     data_path_generator = lambda task_p: [os.path.join(task_p, 'edge_trajectory_integrated')]
@@ -124,15 +124,17 @@ if __name__ == '__main__':
         _plot_ke_distribution(axes[a_i], freqs, obj_to_rasterize, 'blue', turb_ke_distr)
         _plot_ke_distribution(axes[a_i], freqs, obj_to_rasterize, 'green', edge_ke_distr)
         label_axes(axes[a_i], label=r'$W_{osc} = ' + str(a) + r'$', loc=(0.3, 1.03), fontsize=16)
-        axes[a_i].set_xscale('log', basex=2)
+        axes[a_i].set_xscale('log', base=2)
         axes[a_i].set_xlabel(r'$\omega$', fontsize=16)
         axes[a_i].set_xlim((5*10**(-3), 20.))
         axes[a_i].set_xticks([2**(-7), 2**(-5), 2**(-3), 2**(-1), 2**(1), 2**(3)])
         axes[a_i].set_ylim(ylim)
         axes[a_i].set_yticklabels([])
+        axes[a_i].set_rasterization_zorder(-5)
         axes[a_i].grid()
     ax_unctrl.set_ylabel(r'$E$', fontsize=16)
+    ax_unctrl.set_rasterization_zorder(-5)
     plt.tight_layout()
     plt.subplots_adjust(top=0.93)
-    plt.savefig('turb_attractor_estimate.png')
+    plt.savefig('turb_attractor_estimate.eps')
     plt.show()
