@@ -65,6 +65,11 @@ if __name__ == '__main__':
         variables = collect_variable_data(all_vars_path, group_by='variable_only', count_zero_assignments=False)
         for var_name, var_data in variables.items():
             print(f'{var_name}: {var_data.n_ops} assignments')
+        variables.pop('transmittance')
+        variables.pop('ref_dir')
+        variables.pop('trans_dir_dir')
+        variables.pop('reflectance')
+        variables.pop('trans_dir_diff')
         im = plot_variable_histogram(fig, ax, variables)
         xlim = ax.get_xlim()
         ax.set_xlim((xlim[0], 10**8))

@@ -33,10 +33,12 @@ class EcradRunInfo:
 class FieldInfo:
     name: str
     label: str
+    units: str
     pressure: str = None
     vmin: float = None
     vmax: float = None
     levels: Any = None
+    cf: Any = None
 
 
 if __name__ == '__main__':
@@ -56,10 +58,19 @@ if __name__ == '__main__':
         EcradRunInfo(name='ecrad_tripleclouds_mixed_precision', label='Tripleclouds (mixed precision)'),
     )
     fields_to_plot = (
-        FieldInfo(name='geopotential_height', label='Geopotential height', pressure=500.),
-        FieldInfo(name='temperature_at_2m', label='2-m temperature'),
-        FieldInfo(name='surface_downwards_shortwave_radiation', label=r'\begin{center}Surface downwelling\\shortwave radiation\end{center}'),
-        FieldInfo(name='surface_downwards_longwave_radiation', label=r'\begin{center}Surface downwelling\\longwave radiation\end{center}'),
+        FieldInfo(name='geopotential_height',
+                  label='Geopotential height',
+                  units='m',
+                  pressure=500.),
+        FieldInfo(name='temperature_at_2m',
+                  label='2-m temperature',
+                  units='K'),
+        FieldInfo(name='surface_downwards_shortwave_radiation',
+                  label=r'\begin{center}Surface downwelling\\shortwave radiation\end{center}',
+                  units=r'J m$^{-2}$'),
+        FieldInfo(name='surface_downwards_longwave_radiation',
+                  label=r'\begin{center}Surface downwelling\\longwave radiation\end{center}',
+                  units=r'J m$^{-2}$'),
     )
     n_timesteps = len(step_shifts)
     n_runs = len(ecrad_runs)
@@ -101,6 +112,7 @@ if __name__ == '__main__':
                     fields_to_plot[field_i].vmin = cf.zmin
                     fields_to_plot[field_i].vmax = cf.zmax
                     fields_to_plot[field_i].levels = cf.levels
+                    fields_to_plot[field_i].cf = cf
                 else:
                     cf = iplt.contourf(q_ref - q, 16, cmap=plt.get_cmap('bwr'), 
                                        vmin=fields_to_plot[field_i].vmin, 
@@ -130,13 +142,25 @@ if __name__ == '__main__':
                                 va='center', fontsize=12, rotation='vertical')
 #        cbar = plt.gca().colorbar()
 #        cbar.set_ticks([min_value, 0., max_value])
-    
-    #colorbar_axes = plt.gcf().add_axes([0.35, 0.08, 0.3, 0.05])
-    #colorbar = plt.colorbar(cf, colorbar_axes, orientation='horizontal')
+
+    plt.tight_layout(rect=[0, 0, 0.9, 1], h_pad=0.03, w_pad=1.0)
+
+    for field_i, ax in enumerate(plt.gcf().axes[-4:]):
+        base_rect = list(ax.get_position().bounds)
+        base_rect[0] += base_rect[2] + 0.02  # shift along the x-coord
+        base_rect[2] = 0.015  # set tiny x-extent
+        colorbar_axes = plt.gcf().add_axes(base_rect)
+        colorbar = plt.colorbar(fields_to_plot[field_i].cf, colorbar_axes)
+        colorbar.locator = matplotlib.ticker.MaxNLocator(3)
+        colorbar.update_ticks()
+        colorbar.set_label(fields_to_plot[field_i].units) #, rotation=270.)
+                           #labelpad=8.0,
+                           #rotation='horizontal')
+    #colorbar_axes = plt.gcf().add_axes([0.9, 0.9, 0.05, 0.2])
+    #colorbar = plt.colorbar(fields_to_plot[0].cf, colorbar_axes)
     #colorbar.locator = matplotlib.ticker.MaxNLocator(3)
     #colorbar.update_ticks()
 
     #plt.tight_layout(rect=[0, 0.1, 1, 1], h_pad=0.05, w_pad=1.0)
-    plt.tight_layout(rect=[0, 0, 1, 1], h_pad=0.03, w_pad=1.0)
     plt.savefig(f'fields_comparison_and_rel_error.png', dpi=200)
     plt.show()
