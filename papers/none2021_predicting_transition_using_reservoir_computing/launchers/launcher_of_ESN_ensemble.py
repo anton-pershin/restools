@@ -66,6 +66,7 @@ def make_little_dump(input_filename, omit=None, chande_dir=True):
                 dumped_d = {key: val for key, val in d.items() if not key in omit}
      #   if (esn_name):
       #      make_optimal_esn_filename(dumped_d, d)
+        dumped_d['random_seed_starts_at'] = d['random_seed_starts_at']
         dumped_d['optimal_esn_filename'] = d['optimal_esn_filename']
         dumped_d['output_filenames'] = d['output_filenames']
         dumped_d['finished'] = d['finished']
@@ -92,7 +93,12 @@ class ESNTrainAndIntergateGraph(Graph):
     #                                          ^тут начинается subgraph
 #        state_for_keys_mapping = State('START Making implicit parallelization', array_keys_mapping={'input_filename':'input_filenames', 'optimal_esn_filename':'optimal_esn_filenames'})
         #!   #, array_keys_mapping={'input_filename':'input_filenames', 'optimal_esn_filename':'optimal_esn_filenames', 'output_filenames':'output_filenames', 'finished':'finished', 'started':'started', 'pipes_index':'pipes_index'})
-        state_for_keys_mapping = State('START Making implicit parallelization', array_keys_mapping={'input_filename':'input_filenames', 'optimal_esn_filename':'optimal_esn_filenames', 'pipes_index':'pipes_index'})
+        state_for_keys_mapping = State('START Making implicit parallelization',
+                                       array_keys_mapping={
+                                           'input_filename': 'input_filenames',
+                                           'optimal_esn_filename': 'optimal_esn_filenames',
+                                           'pipes_index': 'pipes_index',
+                                           'random_seed_starts_at': 'random_seed_starts_at'})
         state_for_cd_esn_dir = State('START Create dir for esn')
         state_for_optimal_esn_filename = State('START Making names for esn files')
         
@@ -178,7 +184,8 @@ if __name__ == '__main__':
     #esn_name = 'esn_trained_wo_lam_event'
     l_x = 1.75
     l_z = 1.2
-    n_steps = 20000
+    #n_steps = 20000
+    n_steps = 100
 
     task = res._get_next_task_number()
     res._tasks_number -= 1
@@ -189,12 +196,15 @@ if __name__ == '__main__':
         'pipes_index': [str(i) for i in range(1, n_ESNs + 1)],
         'n_ESNs': n_ESNs,
         
-        'training_timeseries_path': os.path.join(res.local_research_path, f'training_timeseries_re_{re}_new_pert.pickle'),
-        'test_timeseries_path': os.path.join(res.local_research_path, f'test_timeseries_re_{re}_pert.pickle'),
+        'training_timeseries_path': os.path.join(res.local_research_path, f'training_timeseries_re_{re}'),
+        'test_timeseries_path': os.path.join(res.local_research_path, f'test_timeseries_re_{re}'),
         'synchronization_len': 10,
         'test_chunk_timeseries_len': 300,
         'spectral_radius_values': [0.5],
-        'sparsity_values': [0.1, 0.5, 0.9],
+        #'sparsity_values': [0.1, 0.5, 0.9],
+        'sparsity_values': [0.5],
+        'trial_number': 1,
+        'random_seed_starts_at': list(range(1, n_ESNs + 1)),
         'reservoir_dimension': 1500,
         'optimal_esn_filenames': [f'{esn_name}_{i}' for i in range(1, n_ESNs + 1)],
         'optimal_esn_filename': f'{esn_name}',

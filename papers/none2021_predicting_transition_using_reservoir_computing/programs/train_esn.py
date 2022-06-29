@@ -46,7 +46,9 @@ if __name__ == '__main__':
     esn = optimal_esn(training_timeseries, test_timeseries_set,
                       spectral_radius_values=inputs['spectral_radius_values'],
                       sparsity_values=inputs['sparsity_values'],
-                      n_reservoir=inputs['reservoir_dimension'])
+                      n_reservoir=inputs['reservoir_dimension'],
+                      trial_number=inputs['trial_number'],
+                      random_seed_starts_at=inputs['random_seed_starts_at'])
     print(inputs['optimal_esn_filename'])
     with open(inputs['optimal_esn_filename'], 'wb') as f:
         pickle.dump(esn, f)
