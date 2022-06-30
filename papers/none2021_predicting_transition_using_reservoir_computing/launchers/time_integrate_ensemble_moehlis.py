@@ -68,7 +68,7 @@ if __name__ == '__main__':
                                             input_filename=data['input_filename'],
                                             task_prefix=f'ESNPrediction')
 
-#    graph = RemotePythonTimeIntegrationGraph(res, local_comm, ssh_comm,
+#    graph = RemotePythonTimeIntegrationGraph(res, ssh_comm,
 #                                             MoehlisModelIntegrator(input_filename_key='input_filename', nohup=True),
 #                                             input_filename=data['input_filename'],
 #                                             task_prefix='PertMoehlisTimeIntegration')

@@ -56,7 +56,7 @@ if __name__ == '__main__':
                        f'Noise is disabled while predicting'
     }
 
-#    graph = RemotePythonTimeIntegrationGraph(res, local_comm, ssh_comm,
+#    graph = RemotePythonTimeIntegrationGraph(res, ssh_comm,
 #                                             EsnIntegrator(input_filename_key='input_filename', nohup=True),
 #                                             input_filename=data['input_filename'],
 #                                             task_prefix='ESNPrediction')
