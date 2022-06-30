@@ -16,47 +16,49 @@ from comsdk.edge import Edge, dummy_predicate, make_dump, make_composite_func, m
 import comsdk.comaux as aux
 
 
-job_finished_predicate = Func(func=lambda d: check_job_finished(d))
-job_unfinished_predicate = Func(func=lambda d: not check_job_finished(d))
-def check_job_finished(data):
-    cd_for_check(data, 'optimal_esn_filename')
+def check_job_finished(d):
+    #make_cd('optimal_esn_filename')(data)
+    #cd_for_check(data, 'optimal_esn_filename')
     job_finished = False
-    if os.path.exists(os.path.join(data['__WORKING_DIR__'],
-                                   data['finished'])):
+    if os.path.exists(os.path.join(d['__WORKING_DIR__'],
+                                   d['finished'])):
         job_finished = True
     else:
         time.sleep(2)
-    cd_for_check(data, '..')
+    #make_cd('..')(data)
+    #cd_for_check(data, '..')
     return job_finished
 
-def cd_for_check(d, key_path):
-        if key_path == '..':
-            d['__WORKING_DIR__'] = os.path.dirname(d['__WORKING_DIR__'])
-        else:
-            subdir = aux.recursive_get(d, key_path)
-            d['__WORKING_DIR__'] = os.path.join(d['__WORKING_DIR__'],
-                                                subdir)
 
-def make_esn_dirs(data):
-    def _make_esn_dirs(data):
-        esn_dir = os.path.join(data['__WORKING_DIR__'],
-                               f"{data['optimal_esn_filename']}")
+#def cd_for_check(d, key_path):
+#        if key_path == '..':
+#            d['__WORKING_DIR__'] = os.path.dirname(d['__WORKING_DIR__'])
+#        else:
+#            subdir = aux.recursive_get(d, key_path)
+#            d['__WORKING_DIR__'] = os.path.join(d['__WORKING_DIR__'],
+#                                                subdir)
+
+
+def make_esn_dirs(d):
+    def _make_esn_dirs(d):
+        esn_dir = os.path.join(d['__WORKING_DIR__'],
+                               d['optimal_esn_filename'])
         os.mkdir(esn_dir)
     return _make_esn_dirs
    
 
-def make_esn_path(data, input_filename):
-    def _make_esn_path(data):
+def make_esn_path(d, input_filename):
+    def _make_esn_path(d):
 #        if not 'esn_path' in data:
-        data['esn_path'] = os.path.join(data['__WORKING_DIR__'],
-                                        data['optimal_esn_filename'],
-                                        data['optimal_esn_filename'])
+        data['esn_path'] = os.path.join(d['__WORKING_DIR__'],
+                                        d['optimal_esn_filename'],
+                                        d['optimal_esn_filename'])
     return _make_esn_path
 
-def make_optimal_esn_filename(data1, data2):
- #   def _make_optimal_esn_filename():
-    data1['optimal_esn_filename'] = data2['optimal_esn_filename']
-#    return _make_optimal_esn_filename
+
+def make_optimal_esn_filename(d1, d2):
+    d1['optimal_esn_filename'] = d2['optimal_esn_filename']
+
 
 def make_little_dump(input_filename, omit=None, chande_dir=True):
     def _little_dump(d):
@@ -75,14 +77,17 @@ def make_little_dump(input_filename, omit=None, chande_dir=True):
         dumped_d['finished'] = d['finished']
         dumped_d['started'] = d['started']
         if (chande_dir):
-            cd_for_check(dumped_d, 'optimal_esn_filename')
+            make_cd('optimal_esn_filename')(dumped_d)
+            #cd_for_check(dumped_d, 'optimal_esn_filename')
         dump_path = os.path.join(dumped_d['__WORKING_DIR__'],
                                  d[input_filename])
         with open(dump_path, 'w') as f:
             json.dump(dumped_d, f)
         if (chande_dir):
-            cd_for_check(dumped_d, '..')
+            make_cd('..')(dumped_d)
+            #cd_for_check(dumped_d, '..')
     return _little_dump
+
 
 class ESNTrainAndIntergateGraph(Graph):
     def __init__(self, res, comm, input_filename, task_prefix=''):
@@ -125,14 +130,23 @@ class ESNTrainAndIntergateGraph(Graph):
         edge_esn_dir = Edge(dummy_predicate, Func())
         edge_esn_name = Edge(dummy_predicate, Func())
         
-        qstat_edge = Edge(job_unfinished_predicate, Func())
+        job_finished_predicate = Func(
+            func=make_composite_func(
+                make_cd('optimal_esn_filename'),
+                check_job_finished,
+                make_cd('..')
+            )
+        )
+        job_unfinished_predicate = Func(func=lambda d: not job_finished_predicate.func(d))
+        #lambda d: check_job_finished(d))
+        notdone_edge = Edge(job_unfinished_predicate, Func())
         done_edge = Edge(job_finished_predicate, Func())
         
         state_for_keys_mapping.connect_to(state_for_optimal_esn_filename, edge=dummy_edge)
         state_for_optimal_esn_filename.connect_to(state_for_cd_esn_dir, edge=edge_esn_name)
         state_for_cd_esn_dir.connect_to(tt_init, edge=edge_esn_dir)
         
-        tt_term.connect_to(tt_term, edge=qstat_edge)
+        tt_term.connect_to(tt_term, edge=notdone_edge)
         tt_term.connect_to(ti_init, edge=done_edge)
         
         edge_esn_dir.use_proxy_data = True
@@ -182,7 +196,7 @@ class ESNTrainAndIntergateGraph(Graph):
 
 if __name__ == '__main__':
     local_comm = LocalCommunication.create_from_config()
-#    ssh_comm = SshCommunication.create_from_config('atmlxint2')
+#    ssh_comm = SshCommunication.create_from_config('hpc_rk6')
 #    res = Research.open('RC_MOEHLIS', ssh_comm)
     res = Research.open('RC_MOEHLIS')
 
