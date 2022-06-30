@@ -77,8 +77,6 @@ def make_little_dump(input_filename, omit=None, chande_dir=True, remote=False):
         dumped_d['started'] = d['started']
         if (chande_dir):
             make_cd('optimal_esn_filename')(dumped_d)
-        print(dumped_d['__WORKING_DIR__'])
-        print(d[input_filename])
         dump_path = os.path.join(dumped_d['__WORKING_DIR__'],
                                  d[input_filename])
         with open(dump_path, 'w') as f:
