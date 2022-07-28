@@ -17,7 +17,7 @@ from sklearn.metrics import mean_squared_error
 import restools
 from comsdk.research import Research
 from comsdk.misc import load_from_json
-from reducedmodels.models import BrusselatorModel, rk4_timestepping
+from thequickmath.reduced_models.models import BrusselatorModel, rk4_timestepping
 
 
 if __name__ == '__main__':

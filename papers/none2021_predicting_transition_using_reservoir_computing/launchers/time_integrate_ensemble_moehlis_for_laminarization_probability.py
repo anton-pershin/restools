@@ -11,7 +11,7 @@ from papers.none2021_predicting_transition_using_reservoir_computing.extensions 
     RemotePythonTimeIntegrationGraph, generate_random_ic_for_laminarization_probability
 from comsdk.communication import LocalCommunication, SshCommunication
 from comsdk.research import Research, CreateTaskGraph
-from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
+from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEckhardtModel
 
 
 if __name__ == '__main__':

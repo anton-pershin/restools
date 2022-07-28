@@ -17,7 +17,7 @@ from papers.none2021_ecrad.data import Summary
 from papers.none2021_ecrad.extensions import ERA5Data, IfsIO, extract_or_interpolate, get_ifs_rel_diff, get_ifs_abs_rel_diff, get_ifs_rmse
 from comsdk.research import Research
 from comsdk.misc import load_from_json, find_all_files_by_named_regexp
-from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
+from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEckhardtModel
 
 
 if __name__ == '__main__':

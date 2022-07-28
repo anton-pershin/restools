@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import restools
 from comsdk.research import Research
 from comsdk.misc import load_from_json
-from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
+from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEckhardtModel
 
 
 if __name__ == '__main__':

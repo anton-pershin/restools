@@ -10,9 +10,9 @@ import numpy as np
 
 from misc import upload_paths_from_config, generate_random_perturbation
 upload_paths_from_config()
-from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel, \
+from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEckhardtModel, \
     MoehlisFaisstEckhardtPerturbationDynamicsModel
-from reducedmodels.models import rk4_timestepping
+from thequickmath.reduced_models.models import rk4_timestepping
 
 
 def timeintegrate(ic, delta_t=10**(-3), n_steps=int(1.5*10**6), time_skip=100, stop_condition=lambda s: False):

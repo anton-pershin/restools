@@ -16,7 +16,7 @@ from papers.none2021_ecrad.data import Summary
 from papers.none2021_ecrad.extensions import IfsIO, extract_or_interpolate
 from comsdk.research import Research
 from comsdk.misc import load_from_json, find_all_files_by_named_regexp
-from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
+from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEckhardtModel
 
 
 #def plot_comparison(ifs_io, ifs_io_rps, avail_data, quantity='geopotential', vmin=-0.00015, vmax=0.00015, 

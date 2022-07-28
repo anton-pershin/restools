@@ -1,8 +1,0 @@
-[submodule "thequickmath"]
-	path = thequickmath
-	url = https://github.com/anton-pershin/thequickmath
-	branch = master
-[submodule "reducedmodels"]
-	path = reducedmodels
-	url = https://github.com/anton-pershin/reducedmodels.git
-	branch = main

@@ -14,7 +14,7 @@ from papers.none2021_ecrad.data import Summary
 from papers.none2021_ecrad.extensions import EcradIO, heating_rate_diff_rms, plot_data_on_mixed_linear_log_scale
 from comsdk.research import Research
 from comsdk.misc import load_from_json, find_all_files_by_named_regexp
-from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
+from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEckhardtModel
 
 
 def turn_to_int(s):

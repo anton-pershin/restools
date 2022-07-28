@@ -13,7 +13,7 @@ from papers.none2021_predicting_transition_using_reservoir_computing.extensions 
     survival_function, laminarization_probability
 from comsdk.research import Research
 from comsdk.misc import load_from_json, find_all_files_by_named_regexp
-from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
+from thequickmath.reduced_models.transition_to_turbulence import MoehlisFaisstEckhardtModel
 
 
 def build_relaminarisation_times_from_tasks(res, tasks):
