@@ -117,7 +117,7 @@ If you want to run task remotely, remote host data need to be added to `REMOTE_H
 
 # Documentation
 
-1. [Management script](/doc/manage.md): creating research, uploading and downloading tasks from the cloud and remote machines
+1. [Command-line interface (CLI)](/doc/cli.md): creating research, uploading and downloading tasks from the cloud and remote machines
 2. [Research organizer pycomsdk](/doc/pycomsdk.md): general ideas behind the hierachy of research and tasks, interaction with remote hosts, graph-based scenario of running programs and python function and many other things
 3. [Papers](/doc/papers.md): codes used to reproduce all the results and figures found in our papers, both published and yet unpublished
 4. [Time-integration tools](doc/time_integr_tools.md): a collection of classes and functions helpful for dealing with time-integration data and time series (particularly used for transition to turbulence research)
