@@ -15,7 +15,7 @@ from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbPro
 from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM
 from thequickmath.stats import EmpiricalDistribution
 from thequickmath.misc import relative_error
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 
 
 if __name__ == '__main__':

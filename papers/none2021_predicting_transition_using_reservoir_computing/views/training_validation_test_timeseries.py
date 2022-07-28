@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 import restools
 from comsdk.research import Research
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
 from restools.plotting import rasterise_and_save, reduce_eps_size
 

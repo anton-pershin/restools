@@ -12,7 +12,7 @@ import restools
 from papers.none2021_ecrad.data import Summary, ReducedPrecisionVersion
 from papers.none2021_ecrad.extensions import VariableData, collect_variable_data, plot_variable_histogram
 from comsdk.research import Research
-from comsdk.comaux import dump_to_json, load_from_json, find_all_files_by_named_regexp
+from comsdk.misc import dump_to_json, load_from_json, find_all_files_by_named_regexp
 
 
 if __name__ == '__main__':

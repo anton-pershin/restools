@@ -12,7 +12,7 @@ from restools.plotting import label_axes
 from papers.jfm2022_optimizing_control_bayesian_method.data import Summary
 from papers.jfm2022_optimizing_control_bayesian_method.extensions import turbulent_dissipation_rate
 from comsdk.research import Research
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 from thequickmath.differentiation.finite_differences import fd
 from thequickmath.field import average
 

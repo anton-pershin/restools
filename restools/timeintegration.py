@@ -7,7 +7,7 @@ import json
 from restools.function import Function
 from restools.data_access_strategies import free_data_after_access_strategy
 from thequickmath.field import *
-from comsdk.comaux import parse_datafile, parse_timed_numdatafile, parse_by_named_regexp, StandardisedNaming, \
+from comsdk.misc import parse_datafile, parse_timed_numdatafile, parse_by_named_regexp, StandardisedNaming, \
     take_value_if_not_none, raise_exception_if_arguments_not_in_keywords_or_none
 
 

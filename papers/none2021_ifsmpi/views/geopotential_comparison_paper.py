@@ -17,7 +17,7 @@ import restools
 from papers.none2021_ifsmpi.data import Summary
 from papers.none2021_ecrad.extensions import IfsIO, extract_or_interpolate, get_ifs_rel_diff
 from comsdk.research import Research
-from comsdk.comaux import load_from_json, find_all_files_by_named_regexp
+from comsdk.misc import load_from_json, find_all_files_by_named_regexp
 
 
 #def plot_comparison(ifs_io, ifs_io_rps, avail_data, quantity='geopotential', vmin=-0.00015, vmax=0.00015, 

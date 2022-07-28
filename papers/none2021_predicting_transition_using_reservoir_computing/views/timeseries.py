@@ -10,20 +10,20 @@ import matplotlib.pyplot as plt
 
 import restools
 from comsdk.research import Research
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
 
 
 if __name__ == '__main__':
     plt.style.use('resources/default.mplstyle')
 
-    task = 91
+    task = 92
     res_id = 'RC_MOEHLIS'
     res = Research.open(res_id)
     task_path = res.get_task_path(task)
     fig, ax = plt.subplots(1, 1, figsize=(12, 6))
     for i in range(1, 11):
-        with open(os.path.join(task_path, str(i)), 'rb') as f:
+        with open(os.path.join(task_path, 'esn_re_275_4', str(i)), 'rb') as f:
         #with open(os.path.join(res.local_research_path, 'training_timeseries_re_275_0_3100'), 'rb') as f:
         #with open(os.path.join(res.local_research_path, 'training_timeseries_re_275_new'), 'rb') as f:
         #with open(os.path.join(task_path, 'training_timeseries_re_275'), 'rb') as f:
@@ -35,7 +35,7 @@ if __name__ == '__main__':
         # 34 -> 27
 #        if i != 9:  # 11 for 42
 #            continue
-        with open(os.path.join(task_path, 'inputs.json'), 'r') as f:
+        with open(os.path.join(task_path, 'ti_inputs_1.json'), 'r') as f:
             inputs = json.load(f)
             m = MoehlisFaisstEckhardtModel(Re=inputs['re'], L_x=inputs['l_x'] * np.pi, L_z=inputs['l_z'] * np.pi)
             #m = MoehlisFaisstEckhardtModel(Re=inputs['original_model_parameters']['re'], L_x=inputs['original_model_parameters']['l_x'] * np.pi, L_z=inputs['original_model_parameters']['l_z'] * np.pi)

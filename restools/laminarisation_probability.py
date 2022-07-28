@@ -12,7 +12,7 @@ from scipy.integrate import simps
 from restools.relaminarisation import is_relaminarised
 from restools.timeintegration import TimeIntegration, Perturbation
 from restools.timeintegration_builders import TimeIntegration3DBuilder
-import comsdk.comaux as comaux
+import comsdk.misc as misc
 from comsdk.research import Research
 from thequickmath.misc import index_for_almost_exact_coincidence_unsorted
 from thequickmath.stats import ScipyDistribution
@@ -36,7 +36,7 @@ class LaminarisationStudy:
     LaminarisationStudy.timeintegrations() may be time-consuming.
     """
     def __init__(self, paths,
-                 data_dir_naming: Type[comaux.StandardisedNaming],
+                 data_dir_naming: Type[misc.StandardisedNaming],
                  ti_builder: TimeIntegration3DBuilder,
                  debug=False):
         """
@@ -58,8 +58,8 @@ class LaminarisationStudy:
         self._debug = debug
 
     @classmethod
-    def from_paths(cls, paths, rp_naming: Type[comaux.StandardisedNaming],
-                   data_dir_naming: Type[comaux.StandardisedNaming],
+    def from_paths(cls, paths, rp_naming: Type[misc.StandardisedNaming],
+                   data_dir_naming: Type[misc.StandardisedNaming],
                    ti_builder: TimeIntegration3DBuilder,
                    energy_rtol=1e-05,
                    energy_atol=1e-08,
@@ -69,8 +69,8 @@ class LaminarisationStudy:
         return study
 
     @classmethod
-    def from_tasks(cls, res: Research, tasks: Sequence[int], rp_naming: Type[comaux.StandardisedNaming],
-                   data_dir_naming: Type[comaux.StandardisedNaming],
+    def from_tasks(cls, res: Research, tasks: Sequence[int], rp_naming: Type[misc.StandardisedNaming],
+                   data_dir_naming: Type[misc.StandardisedNaming],
                    ti_builder: TimeIntegration3DBuilder,
                    energy_rtol=1e-05,
                    energy_atol=1e-08,
@@ -97,7 +97,7 @@ class LaminarisationStudy:
         for path_id, path in enumerate(self._paths):
             if self._debug:
                 print('\tReading path {}'.format(path))
-            found_data = comaux.find_all_files_by_standardised_naming(rp_naming, path)
+            found_data = misc.find_all_files_by_standardised_naming(rp_naming, path)
             if found_data is None or found_data == []:
                 raise ValueError("No random perturbations found in {}".format(path))
             for file_, data in found_data:

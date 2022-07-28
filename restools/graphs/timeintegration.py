@@ -17,7 +17,7 @@ from comsdk.edge import Edge, ExecutableProgramEdge, QsubScriptEdge, UploadOnRem
     job_unfinished_predicate, job_finished_predicate, dummy_edge, dummy_predicate, dummy_morphism, make_dump, \
     InOutMapping, connect_branches
 from comsdk.graph import Graph, State, Func
-import comsdk.comaux as comaux
+import comsdk.misc as misc
 from thequickmath.misc import is_sequence
 
 
@@ -314,7 +314,7 @@ class ContinuingIntegrationGraph(Graph):
             field_file = None
             field_time = 0
             filenames_and_params = \
-                comaux.find_all_files_by_standardised_naming(integrator_prog_type.ti_class.solution_standardised_filename,
+                misc.find_all_files_by_standardised_naming(integrator_prog_type.ti_class.solution_standardised_filename,
                                                              data_path)
             for filename, params in filenames_and_params:
                 if params['t'] > field_time:

@@ -12,7 +12,7 @@ import restools
 from papers.none2021_predicting_transition_using_reservoir_computing.extensions import relaminarisation_time, \
     survival_function, laminarization_probability
 from comsdk.research import Research
-from comsdk.comaux import load_from_json, find_all_files_by_named_regexp
+from comsdk.misc import load_from_json, find_all_files_by_named_regexp
 from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
 
 

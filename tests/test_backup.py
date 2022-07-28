@@ -17,7 +17,7 @@ from restools.timeintegration_builders import get_ti_builder
 from restools.relaminarisation import upload_relaminarisation_time
 import restools.laminarisation_probability as lp
 from papers.jfm2020_probabilistic_protocol.data import Summary, RPInfo
-from comsdk.comaux import print_pretty_dict, load_from_json, dump_to_json
+from comsdk.misc import print_pretty_dict, load_from_json, dump_to_json
 from comsdk.research import Research
 
 d = load_from_json(Summary)

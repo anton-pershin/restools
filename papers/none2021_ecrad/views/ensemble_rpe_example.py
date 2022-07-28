@@ -12,7 +12,7 @@ import restools
 from restools.plotting import build_zooming_axes_for_plotting_with_box
 from papers.none2021_ecrad.data import Summary, ReducedPrecisionVersion
 from comsdk.research import Research
-from comsdk.comaux import dump_to_json, load_from_json, find_all_files_by_named_regexp
+from comsdk.misc import dump_to_json, load_from_json, find_all_files_by_named_regexp
 
 
 def turn_to_int(s):

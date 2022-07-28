@@ -21,7 +21,7 @@ import iris.plot as iplt
 import iris.quickplot as qplt
 import cf_units
 
-from comsdk.comaux import find_all_files_by_named_regexp
+from comsdk.misc import find_all_files_by_named_regexp
 
 tripleclouds_truth_path = '/network/aopp/chaos/pred/pershin/ecrad/outputs/tripleclouds/52bits'
 tripleclouds_all_path = '/network/aopp/chaos/pred/pershin/ecrad/outputs/tripleclouds'

@@ -12,7 +12,7 @@ from restools.timeintegration_builders import get_ti_builder
 from restools.plotting import label_axes, build_zooming_axes_for_plotting_with_box, rasterise_and_save, reduce_eps_size
 from papers.jfm2020_probabilistic_protocol.data import Summary, SingleConfiguration
 from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM, plot_p_lam, plot_p_lam_from_conf
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 from comsdk.research import Research
 
 

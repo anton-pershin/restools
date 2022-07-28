@@ -13,7 +13,7 @@ from restools.plotting import label_axes
 from papers.jfm2022_optimizing_control_bayesian_method.data import Summary
 from papers.jfm2022_optimizing_control_bayesian_method.extensions import DistributionSummary
 from comsdk.research import Research
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 
 
 def _plot_ke_distribution(ax, freqs, obj_to_rasterize: List[Any], color, distr_summary: DistributionSummary):

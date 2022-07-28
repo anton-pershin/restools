@@ -9,7 +9,7 @@ from scipy.stats import beta
 from restools.plotting import rasterise_and_save
 from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbProto
 from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 
 
 def plot_pretty_tick(ax, val, on_x=False, on_y=False):

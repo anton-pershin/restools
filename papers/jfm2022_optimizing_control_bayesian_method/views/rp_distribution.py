@@ -13,7 +13,7 @@ from restools.timeintegration_builders import get_ti_builder
 from restools.plotting import label_axes, build_zooming_axes_for_plotting_with_box, rasterise_and_save, reduce_eps_size
 from papers.jfm2020_probabilistic_protocol.data import Summary, SingleConfiguration
 from papers.jfm2020_probabilistic_protocol.extensions import RandomPerturbationFilenameJFM2020, OrthogonalComponentOfRandomPerturbationFilenameJFM2020
-from comsdk.comaux import load_from_json, find_all_files_by_standardised_naming
+from comsdk.misc import load_from_json, find_all_files_by_standardised_naming
 from comsdk.research import Research
 from thequickmath.field import read_field, L2_norms
 

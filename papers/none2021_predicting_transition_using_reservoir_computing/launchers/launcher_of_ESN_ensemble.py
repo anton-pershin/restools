@@ -14,7 +14,7 @@ from comsdk.communication import LocalCommunication, SshCommunication
 from comsdk.research import Research, CreateTaskGraph
 from comsdk.graph import Graph, State, Func
 from comsdk.edge import Edge, dummy_predicate, make_dump, make_composite_func, make_cd, make_mkdir
-import comsdk.comaux as aux
+import comsdk.misc as aux
 
 
 def make_check_job_finished(comm=None):
@@ -93,6 +93,7 @@ class ESNTrainAndIntergateGraph(Graph):
             task_name += '_R_{}'.format(d['re'])
             task_name += '_T_{}'.format(d['final_time'])
             task_name += '_ens_{}'.format(len(d['initial_conditions']))
+            task_name += '_nESNs_{}'.format(d['n_ESNs'])
             return task_name
         # (task_start) -> (task_end) -пустое ребро-> (tt_init) -train-> (tt_term) -fin-> (ti_init) -integrate-> (ti_term)
         #                                                               (not fin)^
@@ -238,17 +239,17 @@ if __name__ == '__main__':
 
    # ics = [[0,1,2,3,4,5,6,7]]        #initial condition for all ESNs
     ics = []
-    source_task = 45
-    for ic_i in range(1, 3):
-        ti = TimeIntegrationLowDimensional(res.get_task_path(source_task), ic_i)
-        #q = ti.timeseries - np.array([1., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=np.float64)
-        #ti = TimeIntegrationLowDimensional(res.get_task_path(source_task), 1)
-        ics.append(ti.timeseries[:10].tolist())
-        #ics.append(ti.timeseries[begin_time-10:begin_time].tolist())
+    source_tasks = [42, 45]
+    for source_task in source_tasks:
+        for ic_i in range(1, 100+1):
+            ti = TimeIntegrationLowDimensional(res.get_task_path(source_task), ic_i)
+            #q = ti.timeseries - np.array([1., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=np.float64)
+            #ti = TimeIntegrationLowDimensional(res.get_task_path(source_task), 1)
+            ics.append(ti.timeseries[:10].tolist())
+            #ics.append(ti.timeseries[begin_time-10:begin_time].tolist())
     n_ics = len(ics)
-    source_task = 45
     #begin_time = 13940 + 100 + 100 + 100
-    n_ESNs = 3     #number of ESN 
+    n_ESNs = 10     #number of ESN 
    
     re = 275
     esn_name = f'esn_re_{re}'
@@ -256,7 +257,7 @@ if __name__ == '__main__':
     l_x = 1.75
     l_z = 1.2
     #n_steps = 20000
-    n_steps = 100
+    n_steps = 20000
 
     task = res._get_next_task_number()
     res._tasks_number -= 1
@@ -274,9 +275,9 @@ if __name__ == '__main__':
         'test_chunk_timeseries_len': 300,
         'spectral_radius_values': [0.5],
         #'sparsity_values': [0.1, 0.5, 0.9],
-        'sparsity_values': [0.5],
+        'sparsity_values': [0.9],
         'trial_number': 1,
-        'random_seed_starts_at': list(range(1, n_ESNs + 1)),
+        'random_seed_starts_at': list(range(60 + 1, n_ESNs + 60 + 1)),
         'reservoir_dimension': 1500,
         'optimal_esn_filenames': optimal_esn_filenames,
         'optimal_esn_filename': f'{esn_name}',

@@ -7,7 +7,7 @@ from restools.timeintegration import TimeIntegrationChannelFlowV1, TimeIntegrati
 from comsdk.communication import BaseCommunication
 from comsdk.graph import Func
 from comsdk.edge import Edge, ExecutableProgramEdge, dummy_predicate, dummy_edge, InOutMapping
-import comsdk.comaux as comaux
+import comsdk.misc as misc
 
 
 class StandardisedProgram:
@@ -113,7 +113,7 @@ class CouetteChannelflowV1(StandardisedIntegrator):
         # II. Move *.h5 files and delete temporary data dirs
         for data_path in data_paths:
             filenames_and_params = \
-                comaux.find_all_files_by_standardised_naming(cls.ti_class.solution_standardised_filename, data_path)
+                misc.find_all_files_by_standardised_naming(cls.ti_class.solution_standardised_filename, data_path)
             files = [pair[0] for pair in filenames_and_params]
             #files = get_all_files_by_extension(data_path, 'h5')
             for file in files:

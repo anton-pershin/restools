@@ -13,7 +13,7 @@ from papers.jfm2022_optimizing_control_bayesian_method.data import Summary
 from papers.jfm2022_optimizing_control_bayesian_method.extensions import turbulent_dissipation_rate, exponential_noise_distribution
 from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbProto
 from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 from comsdk.research import Research
 
 if __name__ == '__main__':

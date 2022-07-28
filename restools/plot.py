@@ -11,7 +11,7 @@ import matplotlib.gridspec as gridspec
 from restools.timeintegration_builders import get_ti_builder
 from restools.plotting import put_fields_on_axes
 from comsdk.research import Research
-from comsdk.comaux import take_value_by_index
+from comsdk.misc import take_value_by_index
 from thequickmath.field import read_field
 
 

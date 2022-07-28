@@ -9,7 +9,7 @@ import seaborn as sns
 
 from restools.timeintegration import TimeIntegrationLowDimensional
 from comsdk.research import Research
-from comsdk.comaux import find_all_files_by_named_regexp
+from comsdk.misc import find_all_files_by_named_regexp
 from reducedmodels.transition_to_turbulence import MoehlisFaisstEckhardtModel
 
 

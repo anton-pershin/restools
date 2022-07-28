@@ -16,7 +16,7 @@ from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbPro
 from papers.jfm2020_probabilistic_protocol.extensions import LaminarisationProbabilityFittingFunction2020JFM, \
     plot_p_lam_from_conf, plot_p_lam
 from thequickmath.stats import EmpiricalDistribution
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 from comsdk.research import Research
 
 

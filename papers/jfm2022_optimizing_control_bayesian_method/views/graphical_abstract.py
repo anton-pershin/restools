@@ -13,7 +13,7 @@ from restools.flow_stats import Ensemble, BadEnsemble
 from restools.plotting import label_axes, cell_heatmap, rasterise_and_save, reduce_eps_size
 from papers.jfm2022_optimizing_control_bayesian_method.data import Summary
 from comsdk.research import Research
-from comsdk.comaux import load_from_json
+from comsdk.misc import load_from_json
 from thequickmath.misc import index_for_almost_exact_coincidence
 
 

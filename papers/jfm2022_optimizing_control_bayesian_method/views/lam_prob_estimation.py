@@ -16,7 +16,7 @@ from papers.jfm2020_probabilistic_protocol.data import Summary as SummaryProbPro
 from papers.jfm2020_probabilistic_protocol.extensions import RandomPerturbationFilenameJFM2020, \
     DataDirectoryJFM2020AProbabilisticProtocol, LaminarisationProbabilityFittingFunction2020JFM
 from thequickmath.stats import EmpiricalDistribution
-from comsdk.comaux import load_from_json, dump_to_json
+from comsdk.misc import load_from_json, dump_to_json
 from comsdk.research import Research
 
 

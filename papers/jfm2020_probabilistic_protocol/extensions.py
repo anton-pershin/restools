@@ -7,10 +7,10 @@ from scipy.optimize import root_scalar, minimize
 
 from restools.laminarisation_probability import LaminarisationProbabilityFittingFunction
 from papers.jfm2020_probabilistic_protocol.data import Summary, SingleConfiguration
-import comsdk.comaux as comaux
+import comsdk.misc as misc
 
 
-class RandomPerturbationFilenameJFM2020(comaux.StandardisedNaming):
+class RandomPerturbationFilenameJFM2020(misc.StandardisedNaming):
     """
     Class RandomPerturbationFilenameJFM2020 represents a standardised filename of random perturbations used in study
     Pershin, Beaume, Tobias, JFM, 2020.
@@ -30,23 +30,23 @@ class RandomPerturbationFilenameJFM2020(comaux.StandardisedNaming):
     def regexp_with_substitutions(cls, A=None, B=None, energy_level=None, i=None) -> str:
         # r'^LAM_PLUS_RAND_A_(?P<A>[+-]?\d*\.\d+)_B_(?P<B>[+-]?\d*\.\d+)_(?P<energy_level>\d*\.\d+)_(?P<i>\d+)\.h5'
         res = r'^LAM_PLUS_RAND_A_'
-        res += comaux.take_value_if_not_none(A, default='(?P<A>[+-]?\d*\.\d+)')
+        res += misc.take_value_if_not_none(A, default='(?P<A>[+-]?\d*\.\d+)')
         res += '_B_'
-        res += comaux.take_value_if_not_none(B, default='(?P<B>[+-]?\d*\.\d+)')
+        res += misc.take_value_if_not_none(B, default='(?P<B>[+-]?\d*\.\d+)')
         res += '_'
-        res += comaux.take_value_if_not_none(energy_level, default='(?P<energy_level>\d*\.\d+)')
+        res += misc.take_value_if_not_none(energy_level, default='(?P<energy_level>\d*\.\d+)')
         res += '_'
-        res += comaux.take_value_if_not_none(i, default='(?P<i>\d+)')
+        res += misc.take_value_if_not_none(i, default='(?P<i>\d+)')
         res += '\.h5'
         return res
 
     @classmethod
     def make_name(cls, **kwargs):
-        comaux.raise_exception_if_arguments_not_in_keywords_or_none(['A', 'B', 'energy_level', 'i'], kwargs)
+        misc.raise_exception_if_arguments_not_in_keywords_or_none(['A', 'B', 'energy_level', 'i'], kwargs)
         return 'LAM_PLUS_RAND_A_{}_B_{}_{}_{}.h5'.format(kwargs['A'], kwargs['B'], kwargs['energy_level'], kwargs['i'])
 
 
-class OrthogonalComponentOfRandomPerturbationFilenameJFM2020(comaux.StandardisedNaming):
+class OrthogonalComponentOfRandomPerturbationFilenameJFM2020(misc.StandardisedNaming):
     """
     Class OrthogonalComponentOfRandomPerturbationFilenameJFM2020 represents 
     a standardised filename of a random orthogonal component of a random 
@@ -66,19 +66,19 @@ class OrthogonalComponentOfRandomPerturbationFilenameJFM2020(comaux.Standardised
     def regexp_with_substitutions(cls, energy_level=None, i=None) -> str:
         # r'^RAND_(?P<energy_level>\d*\.\d+)_(?P<i>\d+)\.h5'
         res = r'^RAND_'
-        res += comaux.take_value_if_not_none(energy_level, default='(?P<energy_level>\d*\.\d+)')
+        res += misc.take_value_if_not_none(energy_level, default='(?P<energy_level>\d*\.\d+)')
         res += '_'
-        res += comaux.take_value_if_not_none(i, default='(?P<i>\d+)')
+        res += misc.take_value_if_not_none(i, default='(?P<i>\d+)')
         res += '\.h5'
         return res
 
     @classmethod
     def make_name(cls, **kwargs):
-        comaux.raise_exception_if_arguments_not_in_keywords_or_none(['energy_level', 'i'], kwargs)
+        misc.raise_exception_if_arguments_not_in_keywords_or_none(['energy_level', 'i'], kwargs)
         return 'RAND_{}_{}.h5'.format(kwargs['energy_level'], kwargs['i'])
 
 
-class DataDirectoryJFM2020AProbabilisticProtocol(comaux.StandardisedNaming):
+class DataDirectoryJFM2020AProbabilisticProtocol(misc.StandardisedNaming):
     """
     Class DataDirectoryJFM2020AProbabilisticProtocol represents a standardised directory name of timeintegrations used
     in study Pershin, Beaume, Tobias, JFM, 2020.
@@ -97,14 +97,14 @@ class DataDirectoryJFM2020AProbabilisticProtocol(comaux.StandardisedNaming):
     def regexp_with_substitutions(cls, energy_level=None, i=None) -> str:
         # r'^data-(?P<energy_level>\d*\.\d+)-(?P<i>\d+)'
         res = r'^data-'
-        res += comaux.take_value_if_not_none(energy_level, default='(?P<energy_level>\d*\.\d+)')
+        res += misc.take_value_if_not_none(energy_level, default='(?P<energy_level>\d*\.\d+)')
         res += '-'
-        res += comaux.take_value_if_not_none(i, default='(?P<i>\d+)')
+        res += misc.take_value_if_not_none(i, default='(?P<i>\d+)')
         return res
 
     @classmethod
     def make_name(cls, **kwargs):
-        comaux.raise_exception_if_arguments_not_in_keywords_or_none(['energy_level', 'i'], kwargs)
+        misc.raise_exception_if_arguments_not_in_keywords_or_none(['energy_level', 'i'], kwargs)
         return 'data-{}-{}'.format(kwargs['energy_level'], kwargs['i'])
 
 
