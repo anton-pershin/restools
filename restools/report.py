@@ -164,7 +164,7 @@ class QuickPresentation:
 
     @classmethod
     def from_config(cls, title, date=None):
-        with open(os.path.expanduser('~/.comsdk/config_research.json', 'r')) as f:
+        with open(os.path.expanduser('~/.comsdk/config_research.json'), 'r') as f:
             conf = json.load(f)
         return QuickPresentation(conf['MEETINGS_PATH'], title, date)
 
