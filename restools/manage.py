@@ -164,7 +164,7 @@ class CloudSubparser(CustomSubparser):
         return task_list
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Manages different objects related to research.')
     subparsers = parser.add_subparsers(title='objects to manage')
     for cls in (ResearchSubparser, MeetingSubparser, GrabResultsSubparser, CloudSubparser):
@@ -173,3 +173,7 @@ if __name__ == '__main__':
         subparser.add_arguments()
     args = parser.parse_args()
     args.func(args)
+
+
+if __name__ == '__main__':
+    main()
