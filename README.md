@@ -3,12 +3,32 @@ A set of pre- and post-processing tools for computational research in transition
 
 # Getting started
 
-A set of packanges needs to be installed beforehand for restools to work properly (see requirements.txt). Known issues:
-* On Windows, h5py needs to be installed from conda, not pip
+## Installation
 
-To start working with restools, create your own `config_research.json`:
+This package can be installed directly from github via
+
 ```bash
-cp pycomsdk/config_research.json.example config_research.json
+$ pip install git+https://github.com/anton-pershin/restools.git
+```
+
+All the requirements will be installed automatically except for `thequickmath` and `comsdk` which must be installed manually:
+```bash
+$ git+https://github.com/anton-pershin/thequickmath.git
+$ git+https://github.com/anton-pershin/comsdk.git
+```
+
+On Windows, you may also need to install h5py from conda, not pip:
+```bash
+$ conda install h5py
+```
+
+If you want to update the networkts package to have the most fresh, please first uninstall it and then install it again.
+
+## Configuration
+
+To start working with `restools`, create your own `config_research.json` based on this example: https://sa2systems.ru:88/com/pycomsdk/blob/dev/config_research.json.example
+```bash
+$ cp config_research.json.example config_research.json
 ```
 First of all, one needs to fill the list of local roots as absolute paths where research directories to be located: `LOCAL_HOST.research_roots`. Then, one needs to fill `RESEARCH` field to inform about available research. Below is the list of currently used research IDs and their names. Research ID is used as a short ID everywhere in API. Research description is the same as the name of research directory which needs to be located in one of the local roots defined in `LOCAL_HOST.research_roots`.
 
