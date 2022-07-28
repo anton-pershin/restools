@@ -13,8 +13,8 @@ $ pip install git+https://github.com/anton-pershin/restools.git
 
 All the requirements will be installed automatically except for `thequickmath` and `comsdk` which must be installed manually:
 ```bash
-$ git+https://github.com/anton-pershin/thequickmath.git
-$ git+https://github.com/anton-pershin/comsdk.git
+$ pip install git+https://github.com/anton-pershin/thequickmath.git
+$ pip install git+https://github.com/anton-pershin/comsdk.git
 ```
 
 On Windows, you may also need to install h5py from conda, not pip:
