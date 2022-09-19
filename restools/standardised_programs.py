@@ -186,11 +186,19 @@ class SimplePythonProgram(StandardisedProgram):
 class EsnIntegrator(StandardisedIntegrator):
     ti_class = TimeIntegrationLowDimensional
 
-    def __init__(self, input_filename_key='input_filename', nohup=False, remote=False, pipes_index_key=None):
-        chaining_command_at_start = lambda d: ''
-        chaining_command_at_end = lambda d: ''
-        if nohup:
-            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True, pipes_index_key=pipes_index_key)
+    def __init__(self,
+                 input_filename_key='input_filename',
+                 nohup=False,
+                 remote=False,
+                 pipes_index_key=None,
+                 chaining_command_at_start=None,
+                 chaining_command_at_end=None,
+                 ):
+        if chaining_command_at_start is None or chaining_command_at_end is None:
+            chaining_command_at_start = lambda d: ''
+            chaining_command_at_end = lambda d: ''
+            if nohup:
+                chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True, pipes_index_key=pipes_index_key)
         super().__init__(name='time_integrate_esn.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
@@ -210,11 +218,19 @@ class EsnIntegrator(StandardisedIntegrator):
 class EsnTrainer(StandardisedIntegrator):
     ti_class = TimeIntegrationLowDimensional
 
-    def __init__(self, input_filename_key='input_filename', nohup=False, remote=False, pipes_index_key=None):
-        chaining_command_at_start = lambda d: ''
-        chaining_command_at_end = lambda d: ''
-        if nohup:
-            chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True, pipes_index_key=pipes_index_key)
+    def __init__(self,
+                 input_filename_key='input_filename',
+                 nohup=False,
+                 remote=False,
+                 pipes_index_key=None,
+                 chaining_command_at_start=None,
+                 chaining_command_at_end=None,
+                 ):
+        if chaining_command_at_start is None or chaining_command_at_end is None:
+            chaining_command_at_start = lambda d: ''
+            chaining_command_at_end = lambda d: ''
+            if nohup:
+                chaining_command_at_start, chaining_command_at_end = nohup_command_start_and_end(remote=remote, python=True, pipes_index_key=pipes_index_key)
         super().__init__(name='train_esn.py',
                          keyword_names=('cores',),
                          trailing_args_keys=(input_filename_key,),
